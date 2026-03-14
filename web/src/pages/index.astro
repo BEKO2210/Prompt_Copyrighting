@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ArmorGenerator from '../components/ArmorGenerator.astro';
+---
+
+<Layout title="Prompt-Armor -- Write-Protection for AI Prompts">
+  <Header />
+
+  <main class="flex-1">
+    <!-- Hero -->
+    <section class="max-w-5xl mx-auto px-6 pt-20 pb-16">
+      <div class="max-w-3xl">
+        <div class="inline-block px-3 py-1 mb-6 text-xs font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
+          v1.0 -- Open Source
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-bold text-armor-white leading-tight tracking-tight mb-6">
+          Write-protection<br />for AI prompts.
+        </h1>
+        <p class="text-lg text-armor-muted leading-relaxed max-w-2xl mb-8">
+          Encode your prompts into tamper-evident blocks. If anyone changes a single
+          character, the mathematical structure breaks and the AI refuses execution.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="#generator"
+            class="inline-flex px-6 py-3 bg-armor-accent hover:bg-armor-accent-hover text-white font-semibold rounded-lg transition-all duration-200"
+          >
+            Try it now
+          </a>
+          <a
+            href="#how-it-works"
+            class="inline-flex px-6 py-3 border border-armor-border text-armor-muted hover:text-armor-white hover:border-armor-white/20 rounded-lg transition-all duration-200"
+          >
+            How it works
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-12">How it works</h2>
+      <div class="grid sm:grid-cols-3 gap-8">
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            01
+          </div>
+          <h3 class="text-armor-white font-semibold">Write your prompt</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Write your AI prompt normally. Any prompt works -- landing pages, APIs, emails, code generation.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            02
+          </div>
+          <h3 class="text-armor-white font-semibold">Armor encodes it</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            The prompt gets Base64-encoded with a SHA-256 integrity hash and a strict system instruction wrapper.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            03
+          </div>
+          <h3 class="text-armor-white font-semibold">Tamper = failure</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Change one character in the encoded block and the math breaks. The AI detects the corruption and refuses to execute.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Demo -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">The principle</h2>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-6 space-y-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-armor-green"></div>
+            <span class="text-sm font-medium text-armor-green">Original block</span>
+          </div>
+          <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
+SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXN0
+--- END ARMOR BLOCK ---</pre>
+          <p class="text-xs text-armor-green">AI decodes and executes correctly.</p>
+        </div>
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-6 space-y-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-armor-red"></div>
+            <span class="text-sm font-medium text-armor-red">Modified block (1 char changed)</span>
+          </div>
+          <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
+SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-red font-bold">X</span>MgYSB0ZXN0
+--- END ARMOR BLOCK ---</pre>
+          <p class="text-xs text-armor-red">[PROMPT-ARMOR] Integrity check failed.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generator -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-3">Generator</h2>
+      <p class="text-armor-muted text-sm mb-8 max-w-2xl">
+        Paste your prompt below to generate a protected armor block. You can also verify existing blocks to check if they have been tampered with.
+      </p>
+      <div class="bg-armor-surface border border-armor-border rounded-xl p-6 sm:p-8">
+        <ArmorGenerator />
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">Use cases</h2>
+      <div class="grid sm:grid-cols-2 gap-4">
+        {[
+          { title: 'Prompt marketplaces', desc: 'Sell prompts that cannot be silently modified by buyers before claiming they do not work.' },
+          { title: 'Embedded prompts in apps', desc: 'Ship prompts inside your product that end users cannot alter without detection.' },
+          { title: 'Team prompt libraries', desc: 'Share standardized prompts across your team with guaranteed consistency.' },
+          { title: 'Educational settings', desc: 'Distribute assignment prompts to students that cannot be tweaked to get easier answers.' },
+        ].map(({ title, desc }) => (
+          <div class="bg-armor-dark border border-armor-border rounded-lg p-5 space-y-2">
+            <h3 class="text-armor-white font-semibold text-sm">{title}</h3>
+            <p class="text-armor-muted text-xs leading-relaxed">{desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Transparency -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-6">What this is (and is not)</h2>
+      <div class="max-w-2xl space-y-4 text-sm text-armor-muted leading-relaxed">
+        <p>
+          Prompt-Armor is <strong class="text-armor-white">tamper-evidence</strong>, not encryption.
+          It prevents casual modification of prompts -- if someone changes anything, the AI detects it.
+        </p>
+        <p>
+          It is <strong class="text-armor-white">not</strong> cryptographic security.
+          Base64 can be decoded by anyone who knows what it is.
+          The protection comes from the combination of encoding fragility and the system instruction contract.
+        </p>
+        <p>
+          Think of it as a <strong class="text-armor-white">tamper-evident seal</strong> on a package:
+          it does not make the contents invisible, but it proves whether someone has opened it.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

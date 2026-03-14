@@ -1,0 +1,297 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout title="Prompt-Vault API Documentation -- Prompt-Armor">
+  <Header />
+
+  <main class="flex-1">
+    <!-- Hero -->
+    <section class="max-w-5xl mx-auto px-6 pt-20 pb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
+          <span class="w-1.5 h-1.5 rounded-full bg-armor-accent"></span>
+          Prompt-Vault
+        </span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold text-armor-white leading-tight tracking-tight mb-4">
+        Vault API Documentation
+      </h1>
+      <p class="text-lg text-armor-muted leading-relaxed max-w-2xl">
+        Server-side prompt proxy with AES-256-GCM encryption. Your prompts never leave the server.
+        Clients only interact through the API.
+      </p>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="max-w-5xl mx-auto px-6 py-12 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">Quick start</h2>
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <h3 class="text-armor-white font-semibold text-sm">1. Install</h3>
+          <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>cd prompt-vault
+npm install</code></pre>
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-armor-white font-semibold text-sm">2. Configure</h3>
+          <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>cp .env.example .env
+
+# Generate a secure API token:
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Edit .env:
+VAULT_SECRET=your-strong-random-secret
+ANTHROPIC_API_KEY=sk-ant-api03-...
+API_TOKENS=your-generated-token</code></pre>
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-armor-white font-semibold text-sm">3. Create prompts</h3>
+          <p class="text-armor-muted text-xs mb-2">Add <code class="text-armor-text">.md</code> files to <code class="text-armor-text">prompts/raw/</code> with frontmatter:</p>
+          <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>---
+id: my-prompt
+name: My Prompt
+author: Your Name
+copyright: (c) 2024 Your Name
+version: 1.0.0
+description: What this prompt does
+---
+Your prompt content here.
+Use &#123;&#123;variable&#125;&#125; for dynamic values.</code></pre>
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-armor-white font-semibold text-sm">4. Encrypt and start</h3>
+          <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>npm run encrypt   # Encrypts prompts into vault.enc
+npm start         # Starts the API server on port 3700</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Endpoints -->
+    <section class="max-w-5xl mx-auto px-6 py-12 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">API Endpoints</h2>
+
+      <!-- POST /api/run -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2 py-0.5 bg-armor-green/10 border border-armor-green/30 rounded text-xs font-bold text-armor-green">POST</span>
+          <code class="text-armor-white font-semibold">/api/run</code>
+          <span class="text-xs text-armor-muted ml-2">Auth required</span>
+        </div>
+        <p class="text-armor-muted text-sm mb-4">
+          Execute a prompt through the Anthropic API. The prompt content is never returned to the client.
+          The AI response is watermarked with invisible zero-width Unicode characters.
+        </p>
+
+        <h4 class="text-armor-white text-xs font-semibold uppercase tracking-wider mb-2">Request</h4>
+        <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto mb-4"><code>curl -X POST http://localhost:3700/api/run \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '&#123;
+    "prompt_id": "seo-article",
+    "variables": &#123;
+      "topic": "AI Security",
+      "keyword": "prompt protection",
+      "word_count": "800"
+    &#125;
+  &#125;'</code></pre>
+
+        <h4 class="text-armor-white text-xs font-semibold uppercase tracking-wider mb-2">Request body</h4>
+        <div class="overflow-x-auto mb-4">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="border-b border-armor-border">
+                <th class="py-2 pr-4 text-left text-armor-muted font-medium">Field</th>
+                <th class="py-2 pr-4 text-left text-armor-muted font-medium">Type</th>
+                <th class="py-2 pr-4 text-left text-armor-muted font-medium">Required</th>
+                <th class="py-2 text-left text-armor-muted font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody class="text-armor-text">
+              <tr class="border-b border-armor-border/50">
+                <td class="py-2 pr-4"><code class="text-armor-accent">prompt_id</code></td>
+                <td class="py-2 pr-4">string</td>
+                <td class="py-2 pr-4">yes</td>
+                <td class="py-2">ID of the prompt to execute</td>
+              </tr>
+              <tr class="border-b border-armor-border/50">
+                <td class="py-2 pr-4"><code class="text-armor-accent">variables</code></td>
+                <td class="py-2 pr-4">object</td>
+                <td class="py-2 pr-4">no</td>
+                <td class="py-2">Key-value pairs to interpolate into the prompt template</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4"><code class="text-armor-accent">model</code></td>
+                <td class="py-2 pr-4">string</td>
+                <td class="py-2 pr-4">no</td>
+                <td class="py-2">Anthropic model override (default: claude-sonnet-4-20250514)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4 class="text-armor-white text-xs font-semibold uppercase tracking-wider mb-2">Response</h4>
+        <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>&#123;
+  "response": "...(watermarked AI response)...",
+  "prompt_id": "seo-article",
+  "model": "claude-sonnet-4-20250514",
+  "watermarked": true,
+  "usage": &#123; "input_tokens": 150, "output_tokens": 800 &#125;
+&#125;</code></pre>
+      </div>
+
+      <!-- GET /api/prompts -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2 py-0.5 bg-armor-accent/10 border border-armor-accent/30 rounded text-xs font-bold text-armor-accent">GET</span>
+          <code class="text-armor-white font-semibold">/api/prompts</code>
+          <span class="text-xs text-armor-muted ml-2">Auth required</span>
+        </div>
+        <p class="text-armor-muted text-sm mb-4">
+          List all available prompts. Returns metadata only -- prompt content is never exposed.
+        </p>
+
+        <h4 class="text-armor-white text-xs font-semibold uppercase tracking-wider mb-2">Request</h4>
+        <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto mb-4"><code>curl http://localhost:3700/api/prompts \
+  -H "Authorization: Bearer YOUR_TOKEN"</code></pre>
+
+        <h4 class="text-armor-white text-xs font-semibold uppercase tracking-wider mb-2">Response</h4>
+        <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>&#123;
+  "prompts": [
+    &#123;
+      "id": "seo-article",
+      "name": "SEO Article Writer",
+      "author": "Belkis Aslani",
+      "copyright": "(c) 2024 Belkis Aslani",
+      "version": "1.0.0",
+      "description": "Generates SEO-optimized articles"
+    &#125;
+  ]
+&#125;</code></pre>
+      </div>
+
+      <!-- GET /api/health -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2 py-0.5 bg-armor-accent/10 border border-armor-accent/30 rounded text-xs font-bold text-armor-accent">GET</span>
+          <code class="text-armor-white font-semibold">/api/health</code>
+          <span class="text-xs text-armor-muted ml-2">Public</span>
+        </div>
+        <p class="text-armor-muted text-sm mb-4">
+          Health check endpoint. No authentication required.
+        </p>
+        <pre class="bg-armor-surface border border-armor-border rounded-lg p-4 text-xs text-armor-text overflow-x-auto"><code>&#123; "status": "ok", "prompts_loaded": 3, "uptime": 1234 &#125;</code></pre>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="max-w-5xl mx-auto px-6 py-12 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">Security details</h2>
+
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-5 space-y-3">
+          <h3 class="text-armor-white font-semibold text-sm">Encryption</h3>
+          <p class="text-armor-muted text-xs leading-relaxed">
+            Prompts are encrypted with AES-256-GCM. Key derivation uses scrypt with a 32-byte random salt.
+            Each encryption uses a fresh IV. The GCM authentication tag ensures both confidentiality and integrity.
+          </p>
+          <p class="text-xs text-armor-text">
+            Vault format: <code class="text-armor-accent">[salt:32][iv:16][tag:16][ciphertext]</code>
+          </p>
+        </div>
+
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-5 space-y-3">
+          <h3 class="text-armor-white font-semibold text-sm">Authentication</h3>
+          <p class="text-armor-muted text-xs leading-relaxed">
+            API tokens are hashed with SHA-256 before comparison. Raw tokens are never stored or logged.
+            Request logs only show the first 8 characters of the hash for debugging.
+          </p>
+          <p class="text-xs text-armor-text">
+            Header: <code class="text-armor-accent">Authorization: Bearer &lt;token&gt;</code>
+          </p>
+        </div>
+
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-5 space-y-3">
+          <h3 class="text-armor-white font-semibold text-sm">Watermarking</h3>
+          <p class="text-armor-muted text-xs leading-relaxed">
+            Every AI response is embedded with invisible zero-width Unicode characters that encode
+            the prompt ID, timestamp, and client token hash. The watermark survives copy-paste.
+          </p>
+          <p class="text-xs text-armor-text">
+            Characters: <code class="text-armor-accent">U+200B</code> <code class="text-armor-accent">U+200C</code> <code class="text-armor-accent">U+200D</code>
+          </p>
+        </div>
+
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-5 space-y-3">
+          <h3 class="text-armor-white font-semibold text-sm">Response headers</h3>
+          <p class="text-armor-muted text-xs leading-relaxed">
+            Every response includes legal copyright headers, content-type protection, frame denial,
+            and no-cache directives. Rate limiting is set to 30 requests per minute per IP.
+          </p>
+          <p class="text-xs text-armor-text">
+            <code class="text-armor-accent">X-Prompt-License</code> / <code class="text-armor-accent">X-Prompt-Copyright</code>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Codes -->
+    <section class="max-w-5xl mx-auto px-6 py-12 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">Error codes</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead>
+            <tr class="border-b border-armor-border">
+              <th class="py-3 pr-4 text-armor-muted font-medium text-xs uppercase tracking-wider">Status</th>
+              <th class="py-3 pr-4 text-armor-muted font-medium text-xs uppercase tracking-wider">Meaning</th>
+              <th class="py-3 text-armor-muted font-medium text-xs uppercase tracking-wider">Resolution</th>
+            </tr>
+          </thead>
+          <tbody class="text-armor-text text-xs">
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4"><code class="text-armor-accent">400</code></td>
+              <td class="py-3 pr-4">Missing prompt_id</td>
+              <td class="py-3">Include prompt_id in request body</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4"><code class="text-armor-accent">401</code></td>
+              <td class="py-3 pr-4">Missing Authorization header</td>
+              <td class="py-3">Add Bearer token to request header</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4"><code class="text-armor-accent">403</code></td>
+              <td class="py-3 pr-4">Invalid API token</td>
+              <td class="py-3">Check that your token matches one in API_TOKENS</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4"><code class="text-armor-accent">404</code></td>
+              <td class="py-3 pr-4">Prompt not found</td>
+              <td class="py-3">Verify prompt_id exists via GET /api/prompts</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4"><code class="text-armor-accent">429</code></td>
+              <td class="py-3 pr-4">Rate limit exceeded</td>
+              <td class="py-3">Wait and retry (30 req/min limit)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4"><code class="text-armor-accent">502</code></td>
+              <td class="py-3 pr-4">Anthropic API auth failed</td>
+              <td class="py-3">Check ANTHROPIC_API_KEY in .env</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Back link -->
+    <section class="max-w-5xl mx-auto px-6 py-12 border-t border-armor-border">
+      <a href={base} class="inline-flex items-center gap-2 text-armor-accent hover:text-armor-accent-hover text-sm transition-colors">
+        <span>&larr;</span> Back to Prompt-Armor
+      </a>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

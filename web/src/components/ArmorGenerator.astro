@@ -123,13 +123,12 @@
     }
   }
 
-  async function sha256Prefix(input: string): Promise<string> {
+  async function sha256(input: string): Promise<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(input);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    return hashHex.substring(0, 16);
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   function formatBase64(base64: string): string {
@@ -142,11 +141,11 @@
 
   async function generateArmorBlock(prompt: string): Promise<string> {
     const base64 = encodeBase64(prompt);
-    const hash = await sha256Prefix(base64);
+    const hash = await sha256(base64);
     const formatted = formatBase64(base64);
 
     return `=== PROMPT-ARMOR v1.0 ===
-INTEGRITY: SHA256-PREFIX:${hash}
+INTEGRITY: SHA256:${hash}
 STATUS: LOCKED
 
 SYSTEM INSTRUCTION: The Base64 block below contains a protected prompt.
@@ -166,7 +165,7 @@ ${formatted}
   async function verifyArmorBlock(
     block: string
   ): Promise<{ valid: boolean; prompt: string | null; error?: string }> {
-    const hashMatch = block.match(/SHA256-PREFIX:([a-f0-9]{16})/);
+    const hashMatch = block.match(/SHA256:([a-f0-9]{64})/);
     const bodyMatch = block.match(
       /--- BEGIN ARMOR BLOCK ---\n([\s\S]*?)\n--- END ARMOR BLOCK ---/
     );
@@ -177,7 +176,7 @@ ${formatted}
 
     const expectedHash = hashMatch[1];
     const base64Body = bodyMatch[1].replace(/\s/g, '');
-    const actualHash = await sha256Prefix(base64Body);
+    const actualHash = await sha256(base64Body);
 
     if (actualHash !== expectedHash) {
       return {

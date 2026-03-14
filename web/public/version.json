@@ -1,5 +1,5 @@
 {
-  "version": "1.1.8",
+  "version": "1.1.9",
   "date": "2026-03-14",
-  "changelog": ["Merge pull request #9 from BEKO2210/claude/prompt-armor-setup-xtzcN"]
+  "changelog": ["Einführung der Prompt Vault"]
 }

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -35,6 +35,65 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build
+
+      - name: Generate version and update service worker
+        working-directory: web
+        run: |
+          # Read current version from version.json
+          CURRENT_VERSION=$(cat public/version.json | node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
+            process.stdout.write(data.version);
+          ")
+
+          # Parse semver parts
+          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          BUILD_DATE=$(date -u +%Y-%m-%d)
+
+          echo "Version: $CURRENT_VERSION -> $NEW_VERSION"
+
+          # Generate changelog from recent commits
+          CHANGELOG=$(git log --oneline -5 --pretty=format:"%s" | head -5)
+
+          # Build changelog JSON array
+          CHANGELOG_JSON=$(echo "$CHANGELOG" | node -e "
+            const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+            const items = lines.filter(l => l.length > 0).slice(0, 5);
+            process.stdout.write(JSON.stringify(items));
+          ")
+
+          # Update version.json in the build output
+          cat > dist/version.json << VEOF
+          {
+            "version": "${NEW_VERSION}",
+            "date": "${BUILD_DATE}",
+            "changelog": ${CHANGELOG_JSON}
+          }
+          VEOF
+
+          # Inject cache version into service worker
+          sed -i "s/__SW_CACHE_VERSION__/${NEW_VERSION}/g" dist/sw.js
+
+          echo "Updated version.json and sw.js with version ${NEW_VERSION}"
+
+      - name: Commit updated version.json back to repo
+        run: |
+          NEW_VERSION=$(cat web/dist/version.json | node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('/dev/stdin','utf8'));
+            process.stdout.write(data.version);
+          ")
+          cp web/dist/version.json web/public/version.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/public/version.json
+          git diff --cached --quiet || git commit -m "chore: bump version to ${NEW_VERSION}" && git push || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

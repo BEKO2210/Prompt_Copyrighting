@@ -1,0 +1,10 @@
+{
+  "version": "1.1.0",
+  "date": "2026-03-14",
+  "changelog": [
+    "PWA support -- install Prompt-Armor on your device",
+    "Offline mode -- generate armor blocks without internet",
+    "Auto-update notifications with changelog popup",
+    "New app icon and branding"
+  ]
+}

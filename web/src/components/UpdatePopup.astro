@@ -1,0 +1,141 @@
+---
+// UpdatePopup - Shows a notification when a new version is available
+// Fetches version.json, compares with stored version, and displays changelog
+---
+
+<div
+  id="update-popup"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Update available"
+>
+  <!-- Backdrop -->
+  <div id="update-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+  <!-- Popup -->
+  <div class="relative w-full max-w-md bg-armor-dark border border-armor-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+    <!-- Header with icon -->
+    <div class="px-6 pt-6 pb-4 border-b border-armor-border">
+      <div class="flex items-center gap-4">
+        <img
+          src={`${import.meta.env.BASE_URL}icon-192.png`}
+          alt="Prompt-Armor"
+          width="48"
+          height="48"
+          class="rounded-xl"
+        />
+        <div>
+          <h2 class="text-armor-white font-bold text-lg">New version available</h2>
+          <p id="update-version" class="text-armor-accent text-sm font-medium"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Changelog -->
+    <div class="px-6 py-5">
+      <p class="text-armor-muted text-xs uppercase tracking-wider font-semibold mb-3">What's new</p>
+      <ul id="update-changelog" class="space-y-2"></ul>
+    </div>
+
+    <!-- Actions -->
+    <div class="px-6 pb-6 flex gap-3">
+      <button
+        id="update-btn-reload"
+        class="flex-1 px-5 py-2.5 bg-armor-accent hover:bg-armor-accent-hover text-white font-semibold text-sm rounded-lg transition-all duration-200 active:scale-[0.98]"
+      >
+        Update now
+      </button>
+      <button
+        id="update-btn-dismiss"
+        class="px-5 py-2.5 border border-armor-border text-armor-muted hover:text-armor-white hover:border-armor-white/20 text-sm rounded-lg transition-all duration-200"
+      >
+        Later
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'prompt-armor-version';
+  const BASE = import.meta.env.BASE_URL;
+
+  const popup = document.getElementById('update-popup')!;
+  const backdrop = document.getElementById('update-backdrop')!;
+  const versionEl = document.getElementById('update-version')!;
+  const changelogEl = document.getElementById('update-changelog')!;
+  const btnReload = document.getElementById('update-btn-reload')!;
+  const btnDismiss = document.getElementById('update-btn-dismiss')!;
+
+  function showPopup(version: string, date: string, changelog: string[]) {
+    versionEl.textContent = `v${version} -- ${date}`;
+    changelogEl.innerHTML = '';
+    changelog.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-2 text-sm text-armor-text';
+      li.innerHTML = `<span class="text-armor-accent mt-0.5 shrink-0">--</span><span>${item}</span>`;
+      changelogEl.appendChild(li);
+    });
+    popup.classList.remove('hidden');
+  }
+
+  function hidePopup() {
+    popup.classList.add('hidden');
+  }
+
+  btnReload.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  btnDismiss.addEventListener('click', () => {
+    hidePopup();
+  });
+
+  backdrop.addEventListener('click', () => {
+    hidePopup();
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !popup.classList.contains('hidden')) {
+      hidePopup();
+    }
+  });
+
+  // ─── Check for updates ───
+
+  async function checkForUpdate() {
+    try {
+      const resp = await fetch(`${BASE}version.json?_=${Date.now()}`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const stored = localStorage.getItem(STORAGE_KEY);
+
+      if (!stored) {
+        // First visit -- store current version, no popup
+        localStorage.setItem(STORAGE_KEY, data.version);
+        return;
+      }
+
+      if (stored !== data.version) {
+        // New version detected
+        localStorage.setItem(STORAGE_KEY, data.version);
+        showPopup(data.version, data.date, data.changelog);
+      }
+    } catch {
+      // Offline or fetch failed -- silently skip
+    }
+  }
+
+  // Listen for service worker update message
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'SW_UPDATED') {
+        checkForUpdate();
+      }
+    });
+  }
+
+  // Also check on page load (covers first-time installs and tab refreshes)
+  checkForUpdate();
+</script>

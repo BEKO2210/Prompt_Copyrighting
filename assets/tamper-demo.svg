@@ -16,6 +16,8 @@
     <text x="34" y="22" font-family="monospace" font-size="11" fill="#22c55e" font-weight="600">INTACT -- AI executes</text>
     <text x="20" y="48" font-family="monospace" font-size="10" fill="#3a3a4a">--- BEGIN ARMOR BLOCK ---</text>
     <text x="20" y="64" font-family="monospace" font-size="10" fill="#6b6b80">SGVsbG8gV29ybGQhIFRoaXMga</text>
+    <!-- Original character highlighted green -->
+    <rect x="267" y="53" width="10" height="16" rx="2" fill="#22c55e" fill-opacity="0.15" stroke="#22c55e" stroke-width="0.5"/>
     <text x="268" y="64" font-family="monospace" font-size="10" fill="#22c55e" font-weight="700">X</text>
     <text x="277" y="64" font-family="monospace" font-size="10" fill="#6b6b80">MgYSB0ZXN0</text>
     <text x="20" y="80" font-family="monospace" font-size="10" fill="#3a3a4a">--- END ARMOR BLOCK ---</text>

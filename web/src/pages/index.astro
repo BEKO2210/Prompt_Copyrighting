@@ -13,9 +13,19 @@ import UpdatePopup from '../components/UpdatePopup.astro';
     <!-- Hero -->
     <section class="max-w-5xl mx-auto px-6 pt-20 pb-16">
       <div class="max-w-3xl">
-        <div class="inline-block px-3 py-1 mb-6 text-xs font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
-          v1.0 -- Open Source
+        <div id="version-badge" class="inline-block px-3 py-1 mb-6 text-xs font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
+          Loading...
         </div>
+        <script define:vars={{ base: import.meta.env.BASE_URL }}>
+          fetch(base + 'version.json?_=' + Date.now())
+            .then(r => r.json())
+            .then(d => {
+              document.getElementById('version-badge').textContent = 'v' + d.version + ' -- Open Source';
+            })
+            .catch(() => {
+              document.getElementById('version-badge').textContent = 'Open Source';
+            });
+        </script>
         <h1 class="text-4xl sm:text-5xl font-bold text-armor-white leading-tight tracking-tight mb-6">
           Write-protection<br />for AI prompts.
         </h1>

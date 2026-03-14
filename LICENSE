@@ -1,21 +1,99 @@
-MIT License
+Prompt-Armor License v1.0
 
-Copyright (c) 2026 Belkis (BEKO2210)
+Copyright (c) 2026 Belkis Aslani (https://github.com/BEKO2210)
+All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. DEFINITIONS
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   "Software" refers to the Prompt-Armor source code, documentation,
+   generated assets, and all associated files in this repository.
+
+   "Personal Use" means use by an individual for private, non-commercial
+   purposes including learning, experimentation, research, and personal
+   projects that do not generate revenue.
+
+   "Commercial Use" means any use of the Software that directly or
+   indirectly generates revenue, including but not limited to:
+   (a) selling, licensing, or distributing prompts protected by this
+       Software or its methods;
+   (b) integrating the Software or its methods into a commercial product,
+       service, or platform;
+   (c) using the Software as part of a paid service offering;
+   (d) any use within a for-profit organization beyond individual
+       evaluation.
+
+
+2. GRANT OF RIGHTS
+
+   Subject to the terms of this license, the copyright holder grants you
+   a non-exclusive, non-transferable, revocable license to:
+
+   (a) Use, copy, and modify the Software for Personal Use at no cost.
+   (b) Study the source code for educational purposes.
+   (c) Fork the repository and make modifications for Personal Use.
+   (d) Share unmodified copies of the Software, provided this license
+       is included in full.
+
+
+3. RESTRICTIONS
+
+   Without a separate commercial license agreement, you may NOT:
+
+   (a) Use the Software or its methods for any Commercial Use as
+       defined above.
+   (b) Sell, sublicense, or distribute prompts that have been protected
+       using this Software or its methods.
+   (c) Remove, alter, or obscure this license notice or any copyright
+       notices contained in the Software.
+   (d) Represent the Software or its output as your own creation without
+       attribution to the original author.
+   (e) Use the Software to provide a competing service that replicates
+       the core functionality of Prompt-Armor.
+
+
+4. COMMERCIAL LICENSING
+
+   A commercial license is required for any Commercial Use. Commercial
+   licenses are available by contacting the copyright holder:
+
+   Belkis Aslani
+   Email: belkis.aslani@gmail.com
+
+   Commercial license terms, pricing, and scope are determined on a
+   case-by-case basis.
+
+
+5. ATTRIBUTION
+
+   Any permitted use of the Software must include visible attribution
+   to the original author:
+
+   "Prompt-Armor by Belkis Aslani (https://github.com/BEKO2210)"
+
+
+6. DISCLAIMER OF WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-
+   INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR
+   ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+   CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
+   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+7. TERMINATION
+
+   This license is effective until terminated. Your rights under this
+   license will terminate automatically without notice if you fail to
+   comply with any of its terms. Upon termination, you must destroy all
+   copies of the Software in your possession.
+
+
+8. GOVERNING LAW
+
+   This license shall be governed by and construed in accordance with
+   the laws of the Federal Republic of Germany. The courts of Stuttgart,
+   Germany, shall have exclusive jurisdiction over any disputes arising
+   from this license.

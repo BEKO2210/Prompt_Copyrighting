@@ -1,0 +1,145 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Terms of Service -- Prompt-Armor" description="Terms of service for Prompt-Armor.">
+  <Header />
+
+  <main class="flex-1 max-w-3xl mx-auto px-6 py-16">
+    <h1 class="text-3xl font-bold text-armor-white mb-4">Terms of Service</h1>
+    <p class="text-xs text-armor-muted mb-8">Last updated: March 14, 2026</p>
+
+    <div class="space-y-8 text-sm text-armor-text leading-relaxed">
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">1. Scope</h2>
+        <p class="text-armor-muted">
+          These terms of service govern the use of the Prompt-Armor web application
+          ("Service") operated by Belkis Aslani ("Operator"). By accessing or using
+          the Service, you agree to be bound by these terms.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">2. Description of Service</h2>
+        <p class="text-armor-muted">
+          Prompt-Armor is a free online tool that encodes AI prompts into tamper-evident
+          blocks using Base64 encoding and SHA-256 hashing. All processing happens entirely
+          in the user's browser. No data is transmitted to or stored on any server.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">3. Free of charge</h2>
+        <p class="text-armor-muted">
+          The Service is currently provided <strong class="text-armor-white">free of charge</strong>
+          for personal and non-commercial use. The Operator reserves the right to change the
+          pricing model in the future with reasonable advance notice.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">4. Commercial use</h2>
+        <p class="text-armor-muted">
+          Commercial use of the Service, the underlying source code, or the Prompt-Armor method
+          requires a separate commercial license. This includes, but is not limited to, selling
+          protected prompts, integrating the system into commercial products, or offering the
+          Service as part of a paid offering.
+        </p>
+        <p class="text-armor-muted mt-3">
+          For commercial licensing inquiries, please contact:
+          <a href="mailto:belkis.aslani@gmail.com" class="text-armor-accent hover:text-armor-accent-hover transition-colors">
+            belkis.aslani@gmail.com
+          </a>
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">5. No warranty</h2>
+        <p class="text-armor-muted">
+          The Service is provided "as is" without any warranty, express or implied. The Operator
+          does not guarantee that:
+        </p>
+        <ul class="list-disc list-inside text-armor-muted mt-2 space-y-1">
+          <li>The Service will be available at all times without interruption</li>
+          <li>The Service will be free of errors or defects</li>
+          <li>AI models will follow the system instructions in the armor block in all cases</li>
+          <li>The tamper-detection mechanism provides absolute protection against all forms of modification</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">6. Limitation of liability</h2>
+        <p class="text-armor-muted">
+          The Operator shall not be liable for any direct, indirect, incidental, special,
+          consequential, or exemplary damages arising from the use or inability to use the
+          Service, even if the Operator has been advised of the possibility of such damages.
+        </p>
+        <p class="text-armor-muted mt-3">
+          This limitation does not apply to liability for intent or gross negligence, or to
+          mandatory liability under applicable law.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">7. Intellectual property</h2>
+        <p class="text-armor-muted">
+          The Prompt-Armor concept, source code, design, and all associated materials are the
+          intellectual property of Belkis Aslani. Use is permitted only within the scope of
+          the <a href="https://github.com/BEKO2210/Prompt_Copyrighting/blob/main/LICENSE"
+                 class="text-armor-accent hover:text-armor-accent-hover transition-colors">
+          Prompt-Armor License</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">8. User responsibility</h2>
+        <p class="text-armor-muted">
+          You are solely responsible for the content of the prompts you protect using this
+          Service. The Operator has no access to and no knowledge of the content you encode.
+          You agree not to use the Service for any unlawful purpose or to encode content that
+          violates applicable laws.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">9. Changes to the terms</h2>
+        <p class="text-armor-muted">
+          The Operator reserves the right to modify these terms at any time. Changes will be
+          published on this page with an updated date. Continued use of the Service after
+          changes constitutes acceptance of the new terms.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">10. Governing law and jurisdiction</h2>
+        <p class="text-armor-muted">
+          These terms shall be governed by and construed in accordance with the laws of the
+          Federal Republic of Germany. The courts of Stuttgart, Germany, shall have exclusive
+          jurisdiction over any disputes arising from these terms, to the extent permitted by law.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-armor-white mb-3">11. Contact</h2>
+        <p class="text-armor-muted">
+          For questions about these terms, please contact:
+        </p>
+        <p class="mt-2">
+          Belkis Aslani<br/>
+          Vogelsangstr. 32<br/>
+          71691 Freiberg am Neckar, Germany<br/>
+          Email:
+          <a href="mailto:belkis.aslani@gmail.com" class="text-armor-accent hover:text-armor-accent-hover transition-colors">
+            belkis.aslani@gmail.com
+          </a>
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

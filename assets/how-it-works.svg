@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200" fill="none">
+  <defs>
+    <linearGradient id="hw-bg" x1="0" y1="0" x2="900" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0a0a0b"/><stop offset="100%" stop-color="#111118"/>
+    </linearGradient>
+    <filter id="hw-glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <rect width="900" height="200" rx="10" fill="url(#hw-bg)" stroke="#2a2a33" stroke-width="1"/>
+
+  <!-- Step 1: Plain prompt -->
+  <g transform="translate(50, 40)">
+    <rect width="180" height="120" rx="8" fill="#1a1a1f" stroke="#2a2a33" stroke-width="1"/>
+    <text x="90" y="30" text-anchor="middle" font-family="monospace" font-size="10" fill="#6366f1" font-weight="600">01  YOUR PROMPT</text>
+    <line x1="20" y1="42" x2="160" y2="42" stroke="#2a2a33" stroke-width="0.5"/>
+    <text x="90" y="62" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b6b80">"Create a landing</text>
+    <text x="90" y="76" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b6b80">page for my SaaS</text>
+    <text x="90" y="90" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b6b80">product..."</text>
+    <rect x="55" y="100" width="70" height="12" rx="6" fill="#6366f1" fill-opacity="0.1" stroke="#6366f1" stroke-width="0.5"/>
+    <text x="90" y="109" text-anchor="middle" font-family="monospace" font-size="7" fill="#6366f1">UNPROTECTED</text>
+  </g>
+
+  <!-- Arrow 1 -->
+  <g transform="translate(245, 85)">
+    <line x1="0" y1="15" x2="50" y2="15" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4 3">
+      <animate attributeName="stroke-dashoffset" from="7" to="0" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <polygon points="50,8 65,15 50,22" fill="#6366f1">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </polygon>
+  </g>
+
+  <!-- Step 2: Armor process -->
+  <g transform="translate(325, 40)">
+    <rect width="200" height="120" rx="8" fill="#1a1a1f" stroke="#6366f1" stroke-width="1" stroke-opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.8;0.4" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <text x="100" y="30" text-anchor="middle" font-family="monospace" font-size="10" fill="#6366f1" font-weight="600">02  PROMPT-ARMOR</text>
+    <line x1="20" y1="42" x2="180" y2="42" stroke="#2a2a33" stroke-width="0.5"/>
+    <text x="100" y="60" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b6b80">Base64 Encode</text>
+    <text x="100" y="76" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b6b80">+ SHA-256 Hash</text>
+    <text x="100" y="92" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b6b80">+ System Wrapper</text>
+    <rect x="50" y="100" width="100" height="12" rx="6" fill="#6366f1" fill-opacity="0.15" stroke="#6366f1" stroke-width="0.5" filter="url(#hw-glow)">
+      <animate attributeName="fill-opacity" values="0.15;0.3;0.15" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    <text x="100" y="109" text-anchor="middle" font-family="monospace" font-size="7" fill="#a5b4fc">ENCODING</text>
+  </g>
+
+  <!-- Arrow 2 -->
+  <g transform="translate(540, 85)">
+    <line x1="0" y1="15" x2="50" y2="15" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4 3">
+      <animate attributeName="stroke-dashoffset" from="7" to="0" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <polygon points="50,8 65,15 50,22" fill="#6366f1">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </polygon>
+  </g>
+
+  <!-- Step 3: Protected output -->
+  <g transform="translate(620, 40)">
+    <rect width="230" height="120" rx="8" fill="#1a1a1f" stroke="#22c55e" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="115" y="30" text-anchor="middle" font-family="monospace" font-size="10" fill="#22c55e" font-weight="600">03  PROTECTED</text>
+    <line x1="20" y1="42" x2="210" y2="42" stroke="#2a2a33" stroke-width="0.5"/>
+    <text x="115" y="59" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a3a4a">SHA256:4cfce3e30b52c8f1</text>
+    <text x="115" y="73" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a3a4a">--- BEGIN ARMOR ---</text>
+    <text x="115" y="85" text-anchor="middle" font-family="monospace" font-size="8" fill="#22c55e" opacity="0.7">RHUgYmlzdCBlaW4gZXJm</text>
+    <text x="115" y="97" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a3a4a">--- END ARMOR ---</text>
+    <rect x="67" y="102" width="96" height="12" rx="6" fill="#22c55e" fill-opacity="0.1" stroke="#22c55e" stroke-width="0.5"/>
+    <text x="115" y="111" text-anchor="middle" font-family="monospace" font-size="7" fill="#22c55e">TAMPER-EVIDENT</text>
+  </g>
+</svg>

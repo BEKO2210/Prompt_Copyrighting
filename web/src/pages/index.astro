@@ -84,7 +84,7 @@ import UpdatePopup from '../components/UpdatePopup.astro';
             <span class="text-sm font-medium text-armor-green">Original block</span>
           </div>
           <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
-SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXN0
+SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-green font-bold bg-armor-green/10 px-0.5 rounded">X</span>MgYSB0ZXN0
 --- END ARMOR BLOCK ---</pre>
           <p class="text-xs text-armor-green">AI decodes and executes correctly.</p>
         </div>
@@ -94,7 +94,7 @@ SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXN0
             <span class="text-sm font-medium text-armor-red">Modified block (1 char changed)</span>
           </div>
           <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
-SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-red font-bold">X</span>MgYSB0ZXN0
+SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-red font-bold bg-armor-red/10 px-0.5 rounded">Z</span>MgYSB0ZXN0
 --- END ARMOR BLOCK ---</pre>
           <p class="text-xs text-armor-red">[PROMPT-ARMOR] Integrity check failed.</p>
         </div>

@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """
 Prompt-Armor Generator (CLI)
-Encodes prompts into tamper-evident Base64 blocks with SHA-256 integrity verification.
+Encodes prompts into tamper-evident Base64 blocks with full SHA-256 integrity verification.
 
 Usage:
     python prompt-armor-generator.py "Your prompt here"
     echo "Your prompt" | python prompt-armor-generator.py
     python prompt-armor-generator.py  # interactive mode
+
+Verify:
+    cat block.prompt-armor | python prompt-armor-generator.py --verify
+
+Manual verification:
+    # Extract the Base64 body, strip whitespace, and hash it:
+    echo -n "<base64body>" | sha256sum
 """
 
 import base64
@@ -18,11 +25,11 @@ import textwrap
 def encode_armor(prompt: str) -> str:
     """Generate a complete Prompt-Armor block from a plain-text prompt."""
     encoded = base64.b64encode(prompt.encode("utf-8")).decode("ascii")
-    sha_prefix = hashlib.sha256(encoded.encode("ascii")).hexdigest()[:16]
+    sha_full = hashlib.sha256(encoded.encode("ascii")).hexdigest()
     formatted = "\n".join(textwrap.wrap(encoded, width=60))
 
     return f"""=== PROMPT-ARMOR v1.0 ===
-INTEGRITY: SHA256-PREFIX:{sha_prefix}
+INTEGRITY: SHA256:{sha_full}
 STATUS: LOCKED
 
 SYSTEM INSTRUCTION: The Base64 block below contains a protected prompt.
@@ -43,7 +50,7 @@ def verify_armor(block: str) -> tuple[bool, str]:
     """Verify the integrity of an armor block. Returns (valid, message)."""
     import re
 
-    hash_match = re.search(r"SHA256-PREFIX:([a-f0-9]{16})", block)
+    hash_match = re.search(r"SHA256:([a-f0-9]{64})", block)
     body_match = re.search(
         r"--- BEGIN ARMOR BLOCK ---\n(.*?)\n--- END ARMOR BLOCK ---",
         block,
@@ -55,14 +62,18 @@ def verify_armor(block: str) -> tuple[bool, str]:
 
     expected_hash = hash_match.group(1)
     base64_body = "".join(body_match.group(1).split())
-    actual_hash = hashlib.sha256(base64_body.encode("ascii")).hexdigest()[:16]
+    actual_hash = hashlib.sha256(base64_body.encode("ascii")).hexdigest()
 
     if actual_hash != expected_hash:
-        return False, f"Hash mismatch. Expected {expected_hash}, got {actual_hash}."
+        return False, (
+            f"Hash mismatch.\n"
+            f"  Expected: {expected_hash}\n"
+            f"  Got:      {actual_hash}"
+        )
 
     try:
         decoded = base64.b64decode(base64_body).decode("utf-8")
-        return True, f"INTACT. Decoded prompt ({len(decoded)} chars)."
+        return True, f"INTACT. Decoded prompt ({len(decoded)} chars).\nSHA-256: {actual_hash}"
     except Exception:
         return False, "Base64 decoding failed. Content was tampered with."
 

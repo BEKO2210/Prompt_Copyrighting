@@ -1,6 +1,6 @@
 /**
  * Prompt-Armor Core Logic
- * Encodes prompts into tamper-evident Base64 blocks with SHA-256 integrity verification.
+ * Encodes prompts into tamper-evident Base64 blocks with full SHA-256 integrity verification.
  */
 
 /** Encode a string to Base64 (Unicode-safe via UTF-8) */
@@ -28,14 +28,13 @@ export function decodeBase64(encoded: string): string | null {
   }
 }
 
-/** Compute a truncated SHA-256 hash (first 16 hex characters) of the input string */
-export async function sha256Prefix(input: string): Promise<string> {
+/** Compute the full SHA-256 hash (64 hex characters) of the input string */
+export async function sha256(input: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  return hashHex.substring(0, 16);
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /** Format Base64 string into lines of 60 characters */
@@ -50,11 +49,11 @@ function formatBase64(base64: string): string {
 /** Generate a complete Prompt-Armor block */
 export async function generateArmorBlock(prompt: string): Promise<string> {
   const base64 = encodeBase64(prompt);
-  const hash = await sha256Prefix(base64);
+  const hash = await sha256(base64);
   const formatted = formatBase64(base64);
 
   return `=== PROMPT-ARMOR v1.0 ===
-INTEGRITY: SHA256-PREFIX:${hash}
+INTEGRITY: SHA256:${hash}
 STATUS: LOCKED
 
 SYSTEM INSTRUCTION: The Base64 block below contains a protected prompt.
@@ -75,7 +74,7 @@ ${formatted}
 export async function verifyArmorBlock(
   block: string
 ): Promise<{ valid: boolean; prompt: string | null; error?: string }> {
-  const hashMatch = block.match(/SHA256-PREFIX:([a-f0-9]{16})/);
+  const hashMatch = block.match(/SHA256:([a-f0-9]{64})/);
   const bodyMatch = block.match(
     /--- BEGIN ARMOR BLOCK ---\n([\s\S]*?)\n--- END ARMOR BLOCK ---/
   );
@@ -86,13 +85,13 @@ export async function verifyArmorBlock(
 
   const expectedHash = hashMatch[1];
   const base64Body = bodyMatch[1].replace(/\s/g, '');
-  const actualHash = await sha256Prefix(base64Body);
+  const actualHash = await sha256(base64Body);
 
   if (actualHash !== expectedHash) {
     return {
       valid: false,
       prompt: null,
-      error: `Hash mismatch. Expected ${expectedHash}, got ${actualHash}.`,
+      error: `Hash mismatch.\nExpected: ${expectedHash}\nGot:      ${actualHash}`,
     };
   }
 

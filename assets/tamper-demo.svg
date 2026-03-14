@@ -21,7 +21,7 @@
     <text x="268" y="64" font-family="monospace" font-size="10" fill="#22c55e" font-weight="700">X</text>
     <text x="277" y="64" font-family="monospace" font-size="10" fill="#6b6b80">MgYSB0ZXN0</text>
     <text x="20" y="80" font-family="monospace" font-size="10" fill="#3a3a4a">--- END ARMOR BLOCK ---</text>
-    <text x="20" y="105" font-family="monospace" font-size="9" fill="#22c55e" opacity="0.7">SHA-256: e5f3a8b1... MATCH</text>
+    <text x="20" y="105" font-family="monospace" font-size="7" fill="#22c55e" opacity="0.7">SHA-256: e5f3a8b1c9d2e4f607a8b1c9d2e4f607...MATCH</text>
   </g>
 
   <!-- Right: tampered -->
@@ -40,6 +40,6 @@
     <text x="268" y="64" font-family="monospace" font-size="10" fill="#ef4444" font-weight="700">Z</text>
     <text x="277" y="64" font-family="monospace" font-size="10" fill="#6b6b80">MgYSB0ZXN0</text>
     <text x="20" y="80" font-family="monospace" font-size="10" fill="#3a3a4a">--- END ARMOR BLOCK ---</text>
-    <text x="20" y="105" font-family="monospace" font-size="9" fill="#ef4444" opacity="0.7">SHA-256: 9c1d7f02... MISMATCH</text>
+    <text x="20" y="105" font-family="monospace" font-size="7" fill="#ef4444" opacity="0.7">SHA-256: 9c1d7f02a3b5e8f1024c6d9a3b5e8f10...MISMATCH</text>
   </g>
 </svg>

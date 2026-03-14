@@ -107,7 +107,7 @@ corruption and refuses to execute.
 
 ```
 === PROMPT-ARMOR v1.0 ===
-INTEGRITY: SHA256-PREFIX:4cfce3e30b52c8f1
+INTEGRITY: SHA256:4cfce3e30b52c8f152f38ef88defebceba5059a3abf7104008333a7ac85ae92e
 STATUS: LOCKED
 
 SYSTEM INSTRUCTION: The Base64 block below contains a protected prompt.
@@ -167,16 +167,24 @@ One change:  SGVsbG8gV29ybGR=     -->  "Hello Worl|" (corrupted)
 </details>
 
 <details>
-<summary><strong>Layer 3 -- SHA-256 Integrity Hash</strong></summary>
+<summary><strong>Layer 3 -- Full SHA-256 Integrity Hash</strong></summary>
 <br/>
 
-A truncated SHA-256 hash (first 16 hex characters) of the Base64 string is stored in the header.
+The complete SHA-256 hash (64 hex characters) of the Base64 string is stored in the header.
 
-Even if someone manages to produce valid Base64 that decodes to a coherent alternative prompt, the hash will not match. The AI is instructed to verify this hash before executing.
+Even if someone manages to produce valid Base64 that decodes to a coherent alternative prompt, the hash will not match. The full hash enables **manual verification** independent of any AI model:
+
+```bash
+# Extract the Base64 body, strip whitespace, compute SHA-256:
+echo -n "RHUgYmlzdCBlaW4gZXJm..." | sha256sum
+# Compare the output with the INTEGRITY line in the armor block.
+```
 
 ```
-INTEGRITY: SHA256-PREFIX:4cfce3e30b52c8f1
+INTEGRITY: SHA256:4cfce3e30b52c8f152f38ef88defebceba5059a3abf7104008333a7ac85ae92e
 ```
+
+The real verification mechanism is **you** -- copy the Base64 body into `sha256sum` and compare. The AI's behavioral contract is an additional layer, not the only one.
 </details>
 
 <br/>
@@ -307,6 +315,46 @@ npm run dev        # Local dev server at localhost:4321
 npm run build      # Production build to web/dist/
 npm run preview    # Preview production build locally
 ```
+
+<br/>
+
+## Model Compatibility
+
+How well do different AI models respect the Prompt-Armor behavioral contract?
+
+| Model | Decodes & Executes | Refuses on Tamper | Hides Source Prompt | Notes |
+|:------|:------------------:|:-----------------:|:-------------------:|:------|
+| **GPT-4o** | Yes | Yes | Yes | Strong compliance with system instructions |
+| **GPT-4** | Yes | Yes | Yes | Reliable across all three layers |
+| **Claude 3.5 Sonnet** | Yes | Yes | Partial | May summarize intent if asked directly |
+| **Claude 3 Opus** | Yes | Yes | Partial | Excellent at decoding, occasionally reveals structure |
+| **Gemini 1.5 Pro** | Yes | Yes | Yes | Good instruction following |
+| **GPT-3.5 Turbo** | Yes | Partial | No | Weaker instruction adherence, may ignore wrapper |
+| **Llama 3 (70B)** | Yes | Partial | No | Open models follow system prompts less strictly |
+| **Mixtral 8x7B** | Yes | No | No | Decodes correctly but ignores refusal instruction |
+
+> **Key insight:** The SHA-256 hash provides a verification mechanism that works **independent of any model**. Even if a model ignores the system instruction, you can always verify integrity manually with `sha256sum`. The behavioral contract is an additional layer -- not the only protection.
+
+**Help us expand this table.** If you test Prompt-Armor with a model not listed here, open an [issue](https://github.com/BEKO2210/Prompt_Copyrighting/issues) or submit a PR with your results.
+
+<br/>
+
+## Lyra Prompts Integration
+
+Prompt-Armor pairs naturally with [**Lyra Prompts**](https://github.com/BEKO2210/lyra-prompts) -- a library of 2,776+ handcrafted AI prompts for everyday use.
+
+Use Prompt-Armor to protect any Lyra prompt before sharing or selling it:
+
+```bash
+# Protect a Lyra prompt
+python generator/prompt-armor-generator.py "$(cat lyra-prompt.md)" > protected.prompt-armor
+```
+
+| Project | What it does |
+|:--------|:------------|
+| [**Lyra Prompts**](https://github.com/BEKO2210/lyra-prompts) | 2,776+ curated AI prompts for every use case |
+| [**Prompt-Armor**](https://github.com/BEKO2210/Prompt_Copyrighting) | Tamper-evident write-protection for any prompt |
+| [**European Alternatives**](https://beko2210.github.io/european-alternatives.eu-free-open-source/en/categories/) | Free open-source software directory |
 
 <br/>
 

@@ -159,28 +159,30 @@ import UpdatePopup from '../components/UpdatePopup.astro';
         <h3 class="text-armor-white font-semibold text-sm mb-6 uppercase tracking-wider">Architecture</h3>
         <div class="grid md:grid-cols-2 gap-8">
           <!-- Armor Flow -->
-          <div class="space-y-3">
+          <div>
             <p class="text-xs text-armor-green font-semibold uppercase tracking-wider mb-4">Armor Flow</p>
-            <div class="flex items-center gap-3 text-xs">
-              <span class="shrink-0 px-3 py-1.5 bg-armor-surface border border-armor-border rounded-md text-armor-text">Your Prompt</span>
-              <span class="text-armor-muted">--&gt;</span>
-              <span class="shrink-0 px-3 py-1.5 bg-armor-green/10 border border-armor-green/30 rounded-md text-armor-green">Base64 + SHA-256</span>
-              <span class="text-armor-muted">--&gt;</span>
-              <span class="shrink-0 px-3 py-1.5 bg-armor-surface border border-armor-border rounded-md text-armor-text">Armor Block</span>
+            <div class="flex flex-col items-center gap-2 text-xs">
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Your Prompt</span>
+              <span class="text-armor-green text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-green/10 border border-armor-green/30 rounded-md text-armor-green font-medium">Base64 + SHA-256</span>
+              <span class="text-armor-green text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Armor Block</span>
             </div>
-            <p class="text-xs text-armor-muted pt-2">Prompt encoded client-side. Paste into any AI chat. Tamper = detection.</p>
+            <p class="text-xs text-armor-muted mt-3 text-center">Client-side. Paste into any AI chat. Tamper = detection.</p>
           </div>
           <!-- Vault Flow -->
-          <div class="space-y-3">
+          <div>
             <p class="text-xs text-armor-accent font-semibold uppercase tracking-wider mb-4">Vault Flow</p>
-            <div class="flex items-center gap-3 text-xs">
-              <span class="shrink-0 px-3 py-1.5 bg-armor-surface border border-armor-border rounded-md text-armor-text">Client API Call</span>
-              <span class="text-armor-muted">--&gt;</span>
-              <span class="shrink-0 px-3 py-1.5 bg-armor-accent/10 border border-armor-accent/30 rounded-md text-armor-accent">Vault Server</span>
-              <span class="text-armor-muted">--&gt;</span>
-              <span class="shrink-0 px-3 py-1.5 bg-armor-surface border border-armor-border rounded-md text-armor-text">Anthropic API</span>
+            <div class="flex flex-col items-center gap-2 text-xs">
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Client API Call</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-accent/10 border border-armor-accent/30 rounded-md text-armor-accent font-medium">Vault Server (AES-256)</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Anthropic API</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Watermarked Response</span>
             </div>
-            <p class="text-xs text-armor-muted pt-2">Prompt never leaves the server. Client only receives the watermarked response.</p>
+            <p class="text-xs text-armor-muted mt-3 text-center">Server-side. Prompt never leaves the server.</p>
           </div>
         </div>
       </div>

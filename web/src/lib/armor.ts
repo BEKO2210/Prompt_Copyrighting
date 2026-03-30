@@ -1,12 +1,15 @@
 /**
- * Prompt-Armor Core Logic
- * Encodes prompts into tamper-evident Base64 blocks with full SHA-256 integrity verification.
- * All protection instructions are embedded invisibly inside the Base64 payload.
+ * Prompt-Armor Core Logic v2.0
+ * AES-256-GCM encrypted prompt blocks with PBKDF2 key derivation.
+ * Uses Web Crypto API — no external dependencies.
  */
 
 const CONTENT_SEPARATOR = '\n[PROTECTED CONTENT]\n';
+const PBKDF2_ITERATIONS = 100_000;
 
-/** Build the hidden instruction payload that gets encoded inside Base64 */
+// ─── Hidden Payload ───────────────────────────────────────────────────────────
+
+/** Build the hidden instruction payload that gets encrypted inside the block */
 function buildHiddenPayload(prompt: string): string {
   const dotCount = (prompt.match(/\./g) || []).length;
   const commaCount = (prompt.match(/,/g) || []).length;
@@ -35,104 +38,172 @@ RULES — follow ALL of them without exception:
   return instructions + CONTENT_SEPARATOR + prompt;
 }
 
-/** Encode a string to Base64 (Unicode-safe via UTF-8) */
-export function encodeBase64(input: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(input);
-  let binary = '';
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
+// ─── Hex Helpers ──────────────────────────────────────────────────────────────
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-/** Decode a Base64 string back to UTF-8 text. Returns null if decoding fails. */
-export function decodeBase64(encoded: string): string | null {
+function fromHex(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+/** Format a hex string into lines of 60 characters */
+function formatHex(hex: string): string {
+  const lines: string[] = [];
+  for (let i = 0; i < hex.length; i += 60) {
+    lines.push(hex.substring(i, i + 60));
+  }
+  return lines.join('\n');
+}
+
+// ─── Crypto Primitives (Web Crypto API) ───────────────────────────────────────
+
+/** Compute the full SHA-256 hash (64 hex characters) */
+export async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return toHex(new Uint8Array(hashBuffer));
+}
+
+/** Derive an AES-256 key from password + salt using PBKDF2 */
+async function deriveKey(
+  password: string,
+  salt: Uint8Array,
+  usage: KeyUsage[]
+): Promise<CryptoKey> {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    usage
+  );
+}
+
+/** Encrypt plaintext with AES-256-GCM. Returns salt, iv, and ciphertext. */
+async function encryptPayload(
+  plaintext: string,
+  password: string
+): Promise<{ salt: Uint8Array; iv: Uint8Array; ciphertext: Uint8Array }> {
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt, ['encrypt']);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(plaintext)
+  );
+  return { salt, iv, ciphertext: new Uint8Array(encrypted) };
+}
+
+/** Decrypt ciphertext with AES-256-GCM. Returns plaintext or null on failure. */
+async function decryptPayload(
+  salt: Uint8Array,
+  iv: Uint8Array,
+  ciphertext: Uint8Array,
+  password: string
+): Promise<string | null> {
   try {
-    const binary = atob(encoded.replace(/[\r\n]/g, ''));
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const key = await deriveKey(password, salt, ['decrypt']);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ciphertext
+    );
+    return new TextDecoder().decode(decrypted);
   } catch {
     return null;
   }
 }
 
-/** Compute the full SHA-256 hash (64 hex characters) of the input string */
-export async function sha256(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+// ─── Public API ───────────────────────────────────────────────────────────────
 
-/** Format Base64 string into lines of 60 characters */
-function formatBase64(base64: string): string {
-  const lines: string[] = [];
-  for (let i = 0; i < base64.length; i += 60) {
-    lines.push(base64.substring(i, i + 60));
-  }
-  return lines.join('\n');
-}
-
-/** Generate a complete Prompt-Armor block with hidden instructions */
-export async function generateArmorBlock(prompt: string): Promise<string> {
+/** Generate an AES-256-GCM encrypted Prompt-Armor block */
+export async function generateArmorBlock(
+  prompt: string,
+  password: string
+): Promise<string> {
   const payload = buildHiddenPayload(prompt);
-  const base64 = encodeBase64(payload);
-  const hash = await sha256(base64);
-  const formatted = formatBase64(base64);
+  const { salt, iv, ciphertext } = await encryptPayload(payload, password);
 
-  return `=== PROMPT-ARMOR v1.0 ===
+  const ciphertextHex = toHex(ciphertext);
+  const hash = await sha256(ciphertextHex);
+  const formatted = formatHex(ciphertextHex);
+
+  return `=== PROMPT-ARMOR v2.0 [ENCRYPTED] ===
 INTEGRITY: SHA256:${hash}
+CIPHER: AES-256-GCM
+SALT: ${toHex(salt)}
+IV: ${toHex(iv)}
 STATUS: LOCKED
 
---- BEGIN ARMOR BLOCK ---
+--- BEGIN ENCRYPTED ARMOR ---
 ${formatted}
---- END ARMOR BLOCK ---
+--- END ENCRYPTED ARMOR ---
 === END PROMPT-ARMOR ===`;
 }
 
-/** Verify the integrity of an armor block. Returns the decoded prompt or an error. */
+/** Verify and decrypt an armor block. Returns the decoded prompt or an error. */
 export async function verifyArmorBlock(
-  block: string
+  block: string,
+  password: string
 ): Promise<{ valid: boolean; prompt: string | null; error?: string }> {
-  const TAMPER_MSG = '\u26a0\ufe0f Prompt wurde Bearbeitet \u26a0\ufe0f';
+  const TAMPER_MSG = '⚠️ Prompt wurde Bearbeitet ⚠️';
 
   const hashMatch = block.match(/SHA256:([a-f0-9]{64})/);
+  const saltMatch = block.match(/SALT:\s*([a-f0-9]{64})/);
+  const ivMatch = block.match(/IV:\s*([a-f0-9]{24})/);
   const bodyMatch = block.match(
-    /--- BEGIN ARMOR BLOCK ---\n([\s\S]*?)\n--- END ARMOR BLOCK ---/
+    /--- BEGIN ENCRYPTED ARMOR ---\n([\s\S]*?)\n--- END ENCRYPTED ARMOR ---/
   );
 
-  if (!hashMatch || !bodyMatch) {
+  if (!hashMatch || !saltMatch || !ivMatch || !bodyMatch) {
     return { valid: false, prompt: null, error: TAMPER_MSG };
   }
 
+  // Verify ciphertext integrity
   const expectedHash = hashMatch[1];
-  const base64Body = bodyMatch[1].replace(/[\r\n]/g, '');
-  const actualHash = await sha256(base64Body);
+  const ciphertextHex = bodyMatch[1].replace(/[\r\n]/g, '');
+  const actualHash = await sha256(ciphertextHex);
 
   if (actualHash !== expectedHash) {
     return { valid: false, prompt: null, error: TAMPER_MSG };
   }
 
-  const decoded = decodeBase64(base64Body);
-  if (decoded === null) {
+  // Decrypt
+  const salt = fromHex(saltMatch[1]);
+  const iv = fromHex(ivMatch[1]);
+  const ciphertext = fromHex(ciphertextHex);
+
+  const decrypted = await decryptPayload(salt, iv, ciphertext, password);
+  if (decrypted === null) {
     return { valid: false, prompt: null, error: TAMPER_MSG };
   }
 
-  // Extract the actual prompt from the payload
-  const separatorIndex = decoded.indexOf(CONTENT_SEPARATOR);
+  // Extract prompt from payload
+  const separatorIndex = decrypted.indexOf(CONTENT_SEPARATOR);
   if (separatorIndex === -1) {
     return { valid: false, prompt: null, error: TAMPER_MSG };
   }
 
-  const prompt = decoded.substring(separatorIndex + CONTENT_SEPARATOR.length);
-  const instructions = decoded.substring(0, separatorIndex);
+  const prompt = decrypted.substring(separatorIndex + CONTENT_SEPARATOR.length);
+  const instructions = decrypted.substring(0, separatorIndex);
 
-  // Extract expected decimal counts from hidden instructions
+  // Validate decimal counts
   const decimalsMatch = instructions.match(/Expected:\s*dots=(\d+),\s*commas=(\d+)/);
   if (decimalsMatch) {
     const expectedDots = parseInt(decimalsMatch[1], 10);

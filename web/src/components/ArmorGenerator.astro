@@ -1,9 +1,9 @@
 ---
-// ArmorGenerator - Client-side interactive component for generating and verifying Prompt-Armor blocks
+// ArmorGenerator - Client-side interactive component for generating and verifying encrypted Prompt-Armor blocks
 ---
 
 <section id="generator" class="w-full">
-  <!-- GENERATE TAB -->
+  <!-- TABS -->
   <div class="flex border-b border-armor-border mb-6">
     <button
       id="tab-generate"
@@ -17,7 +17,7 @@
       class="tab-btn px-5 py-3 text-sm font-medium border-b-2 border-transparent text-armor-muted hover:text-armor-white transition-colors"
       data-tab="verify"
     >
-      Verify
+      Verify / Decrypt
     </button>
   </div>
 
@@ -35,17 +35,30 @@
       ></textarea>
     </div>
 
+    <div>
+      <label for="password-input" class="block text-sm text-armor-muted mb-2">
+        Encryption password
+      </label>
+      <input
+        type="password"
+        id="password-input"
+        placeholder="Enter a strong password..."
+        class="w-full bg-armor-dark border border-armor-border rounded-lg px-4 py-3 text-armor-white placeholder:text-armor-muted/50 text-sm focus:border-armor-accent transition-colors"
+      />
+      <p class="text-xs text-armor-muted/60 mt-1">AES-256-GCM encryption. Without this password, nobody can read the prompt.</p>
+    </div>
+
     <button
       id="btn-generate"
       class="w-full sm:w-auto px-8 py-3 bg-armor-accent hover:bg-armor-accent-hover text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       disabled
     >
-      Generate Armor Block
+      Encrypt &amp; Generate
     </button>
 
     <div id="output-section" class="hidden space-y-4 animate-fade-in">
       <div class="flex items-center justify-between">
-        <label class="block text-sm text-armor-muted">Protected output</label>
+        <label class="block text-sm text-armor-muted">Encrypted output</label>
         <div class="flex gap-2">
           <button
             id="btn-copy"
@@ -69,18 +82,30 @@
     </div>
   </div>
 
-  <!-- VERIFY PANEL -->
+  <!-- VERIFY / DECRYPT PANEL -->
   <div id="panel-verify" class="space-y-5 hidden">
     <div>
       <label for="verify-input" class="block text-sm text-armor-muted mb-2">
-        Paste an armor block to verify
+        Paste an encrypted armor block
       </label>
       <textarea
         id="verify-input"
         rows="10"
-        placeholder="Paste a complete Prompt-Armor block here..."
+        placeholder="Paste a complete encrypted Prompt-Armor block here..."
         class="w-full bg-armor-dark border border-armor-border rounded-lg px-4 py-3 text-armor-white placeholder:text-armor-muted/50 resize-y text-sm leading-relaxed font-mono focus:border-armor-accent transition-colors"
       ></textarea>
+    </div>
+
+    <div>
+      <label for="verify-password" class="block text-sm text-armor-muted mb-2">
+        Decryption password
+      </label>
+      <input
+        type="password"
+        id="verify-password"
+        placeholder="Enter the password to decrypt..."
+        class="w-full bg-armor-dark border border-armor-border rounded-lg px-4 py-3 text-armor-white placeholder:text-armor-muted/50 text-sm focus:border-armor-accent transition-colors"
+      />
     </div>
 
     <button
@@ -88,7 +113,7 @@
       class="w-full sm:w-auto px-8 py-3 bg-armor-accent hover:bg-armor-accent-hover text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       disabled
     >
-      Verify Integrity
+      Decrypt &amp; Verify
     </button>
 
     <div id="verify-result" class="hidden animate-fade-in">
@@ -98,9 +123,10 @@
 </section>
 
 <script>
-  // ─── Core Logic (inlined for zero-dependency client-side) ───
+  // ─── Crypto Core (AES-256-GCM, inlined for zero-dependency client-side) ───
 
   const CONTENT_SEPARATOR = '\n[PROTECTED CONTENT]\n';
+  const PBKDF2_ITERATIONS = 100_000;
 
   function buildHiddenPayload(prompt: string): string {
     const dotCount = (prompt.match(/\./g) || []).length;
@@ -130,95 +156,126 @@ RULES \u2014 follow ALL of them without exception:
     return instructions + CONTENT_SEPARATOR + prompt;
   }
 
-  function encodeBase64(input: string): string {
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(input);
-    let binary = '';
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte);
-    }
-    return btoa(binary);
+  function toHex(bytes: Uint8Array): string {
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  function decodeBase64(encoded: string): string | null {
+  function fromHex(hex: string): Uint8Array {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+      bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+    }
+    return bytes;
+  }
+
+  function formatHex(hex: string): string {
+    const lines: string[] = [];
+    for (let i = 0; i < hex.length; i += 60) {
+      lines.push(hex.substring(i, i + 60));
+    }
+    return lines.join('\n');
+  }
+
+  async function sha256(input: string): Promise<string> {
+    const data = new TextEncoder().encode(input);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return toHex(new Uint8Array(hashBuffer));
+  }
+
+  async function deriveKey(password: string, salt: Uint8Array, usage: KeyUsage[]): Promise<CryptoKey> {
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, usage
+    );
+  }
+
+  async function encryptPayload(plaintext: string, password: string) {
+    const salt = crypto.getRandomValues(new Uint8Array(32));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt, ['encrypt']);
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext)
+    );
+    return { salt, iv, ciphertext: new Uint8Array(encrypted) };
+  }
+
+  async function decryptPayload(salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array, password: string): Promise<string | null> {
     try {
-      const binary = atob(encoded.replace(/[\r\n]/g, ''));
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      const key = await deriveKey(password, salt, ['decrypt']);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv }, key, ciphertext
+      );
+      return new TextDecoder().decode(decrypted);
     } catch {
       return null;
     }
   }
 
-  async function sha256(input: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  function formatBase64(base64: string): string {
-    const lines: string[] = [];
-    for (let i = 0; i < base64.length; i += 60) {
-      lines.push(base64.substring(i, i + 60));
-    }
-    return lines.join('\n');
-  }
-
-  async function generateArmorBlock(prompt: string): Promise<string> {
+  async function generateArmorBlock(prompt: string, password: string): Promise<string> {
     const payload = buildHiddenPayload(prompt);
-    const base64 = encodeBase64(payload);
-    const hash = await sha256(base64);
-    const formatted = formatBase64(base64);
+    const { salt, iv, ciphertext } = await encryptPayload(payload, password);
 
-    return `=== PROMPT-ARMOR v1.0 ===
+    const ciphertextHex = toHex(ciphertext);
+    const hash = await sha256(ciphertextHex);
+    const formatted = formatHex(ciphertextHex);
+
+    return `=== PROMPT-ARMOR v2.0 [ENCRYPTED] ===
 INTEGRITY: SHA256:${hash}
+CIPHER: AES-256-GCM
+SALT: ${toHex(salt)}
+IV: ${toHex(iv)}
 STATUS: LOCKED
 
---- BEGIN ARMOR BLOCK ---
+--- BEGIN ENCRYPTED ARMOR ---
 ${formatted}
---- END ARMOR BLOCK ---
+--- END ENCRYPTED ARMOR ---
 === END PROMPT-ARMOR ===`;
   }
 
   async function verifyArmorBlock(
-    block: string
+    block: string,
+    password: string
   ): Promise<{ valid: boolean; prompt: string | null; error?: string }> {
     const TAMPER_MSG = '\u26a0\ufe0f Prompt wurde Bearbeitet \u26a0\ufe0f';
 
     const hashMatch = block.match(/SHA256:([a-f0-9]{64})/);
+    const saltMatch = block.match(/SALT:\s*([a-f0-9]{64})/);
+    const ivMatch = block.match(/IV:\s*([a-f0-9]{24})/);
     const bodyMatch = block.match(
-      /--- BEGIN ARMOR BLOCK ---\n([\s\S]*?)\n--- END ARMOR BLOCK ---/
+      /--- BEGIN ENCRYPTED ARMOR ---\n([\s\S]*?)\n--- END ENCRYPTED ARMOR ---/
     );
 
-    if (!hashMatch || !bodyMatch) {
+    if (!hashMatch || !saltMatch || !ivMatch || !bodyMatch) {
       return { valid: false, prompt: null, error: TAMPER_MSG };
     }
 
     const expectedHash = hashMatch[1];
-    const base64Body = bodyMatch[1].replace(/[\r\n]/g, '');
-    const actualHash = await sha256(base64Body);
+    const ciphertextHex = bodyMatch[1].replace(/[\r\n]/g, '');
+    const actualHash = await sha256(ciphertextHex);
 
     if (actualHash !== expectedHash) {
       return { valid: false, prompt: null, error: TAMPER_MSG };
     }
 
-    const decoded = decodeBase64(base64Body);
-    if (decoded === null) {
+    const salt = fromHex(saltMatch[1]);
+    const iv = fromHex(ivMatch[1]);
+    const ciphertext = fromHex(ciphertextHex);
+
+    const decrypted = await decryptPayload(salt, iv, ciphertext, password);
+    if (decrypted === null) {
       return { valid: false, prompt: null, error: TAMPER_MSG };
     }
 
-    const separatorIndex = decoded.indexOf(CONTENT_SEPARATOR);
+    const separatorIndex = decrypted.indexOf(CONTENT_SEPARATOR);
     if (separatorIndex === -1) {
       return { valid: false, prompt: null, error: TAMPER_MSG };
     }
 
-    const prompt = decoded.substring(separatorIndex + CONTENT_SEPARATOR.length);
-    const instructions = decoded.substring(0, separatorIndex);
+    const prompt = decrypted.substring(separatorIndex + CONTENT_SEPARATOR.length);
+    const instructions = decrypted.substring(0, separatorIndex);
 
     const decimalsMatch = instructions.match(/Expected:\s*dots=(\d+),\s*commas=(\d+)/);
     if (decimalsMatch) {
@@ -243,6 +300,7 @@ ${formatted}
   const panelVerify = document.getElementById('panel-verify')!;
 
   const promptInput = document.getElementById('prompt-input') as HTMLTextAreaElement;
+  const passwordInput = document.getElementById('password-input') as HTMLInputElement;
   const btnGenerate = document.getElementById('btn-generate') as HTMLButtonElement;
   const outputSection = document.getElementById('output-section')!;
   const armorOutput = document.getElementById('armor-output')!;
@@ -251,6 +309,7 @@ ${formatted}
   const copyFeedback = document.getElementById('copy-feedback')!;
 
   const verifyInput = document.getElementById('verify-input') as HTMLTextAreaElement;
+  const verifyPassword = document.getElementById('verify-password') as HTMLInputElement;
   const btnVerify = document.getElementById('btn-verify') as HTMLButtonElement;
   const verifyResult = document.getElementById('verify-result')!;
   const verifyStatus = document.getElementById('verify-status')!;
@@ -274,28 +333,33 @@ ${formatted}
   tabVerify.addEventListener('click', () => switchTab('verify'));
 
   // Enable/disable buttons based on input
-  promptInput.addEventListener('input', () => {
-    btnGenerate.disabled = promptInput.value.trim().length === 0;
-  });
+  function updateGenerateBtn() {
+    btnGenerate.disabled = promptInput.value.trim().length === 0 || passwordInput.value.length === 0;
+  }
+  function updateVerifyBtn() {
+    btnVerify.disabled = verifyInput.value.trim().length === 0 || verifyPassword.value.length === 0;
+  }
 
-  verifyInput.addEventListener('input', () => {
-    btnVerify.disabled = verifyInput.value.trim().length === 0;
-  });
+  promptInput.addEventListener('input', updateGenerateBtn);
+  passwordInput.addEventListener('input', updateGenerateBtn);
+  verifyInput.addEventListener('input', updateVerifyBtn);
+  verifyPassword.addEventListener('input', updateVerifyBtn);
 
   // Generate
   btnGenerate.addEventListener('click', async () => {
     const prompt = promptInput.value.trim();
-    if (!prompt) return;
+    const password = passwordInput.value;
+    if (!prompt || !password) return;
 
     btnGenerate.disabled = true;
-    btnGenerate.textContent = 'Generating...';
+    btnGenerate.textContent = 'Encrypting...';
 
-    const result = await generateArmorBlock(prompt);
+    const result = await generateArmorBlock(prompt, password);
     armorOutput.textContent = result;
     outputSection.classList.remove('hidden');
 
     btnGenerate.disabled = false;
-    btnGenerate.textContent = 'Generate Armor Block';
+    btnGenerate.innerHTML = 'Encrypt &amp; Generate';
   });
 
   // Copy
@@ -318,34 +382,45 @@ ${formatted}
     URL.revokeObjectURL(url);
   });
 
-  // Verify
+  // Verify / Decrypt
   btnVerify.addEventListener('click', async () => {
     const block = verifyInput.value.trim();
-    if (!block) return;
+    const password = verifyPassword.value;
+    if (!block || !password) return;
 
     btnVerify.disabled = true;
-    btnVerify.textContent = 'Verifying...';
+    btnVerify.textContent = 'Decrypting...';
 
-    const result = await verifyArmorBlock(block);
+    const result = await verifyArmorBlock(block, password);
     verifyResult.classList.remove('hidden');
 
     if (result.valid) {
       verifyStatus.className =
         'rounded-lg border border-armor-green/30 bg-armor-green/5 px-5 py-4 text-sm';
       verifyStatus.innerHTML = `
-        <p class="text-armor-green font-semibold mb-2">INTACT -- Integrity verified</p>
-        <p class="text-armor-muted text-xs">The armor block has not been modified. The protected prompt is valid.</p>
+        <p class="text-armor-green font-semibold mb-2">INTACT -- Decrypted successfully</p>
+        <p class="text-armor-muted text-xs mb-3">AES-256-GCM decryption and integrity verification passed.</p>
+        <pre class="text-armor-white text-xs bg-armor-dark rounded p-3 whitespace-pre-wrap mb-2">${result.prompt?.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+        <button id="btn-copy-decrypted" class="mt-2 px-4 py-1.5 text-xs font-medium bg-armor-surface border border-armor-border rounded-md hover:border-armor-accent hover:text-armor-accent transition-colors">
+          Copy decrypted prompt
+        </button>
       `;
+      const copyBtn = document.getElementById('btn-copy-decrypted');
+      copyBtn?.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(result.prompt || '');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = 'Copy decrypted prompt'), 2000);
+      });
     } else {
       verifyStatus.className =
         'rounded-lg border border-armor-red/30 bg-armor-red/5 px-5 py-4 text-sm';
       verifyStatus.innerHTML = `
-        <p class="text-armor-red font-semibold mb-2">BROKEN -- Integrity check failed</p>
-        <p class="text-armor-muted text-xs">${result.error}</p>
+        <p class="text-armor-red font-semibold mb-2">${result.error}</p>
+        <p class="text-armor-muted text-xs">Decryption failed. Either the password is wrong or the block has been tampered with.</p>
       `;
     }
 
     btnVerify.disabled = false;
-    btnVerify.textContent = 'Verify Integrity';
+    btnVerify.innerHTML = 'Decrypt &amp; Verify';
   });
 </script>

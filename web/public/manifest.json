@@ -1,0 +1,32 @@
+{
+  "name": "Prompt-Armor",
+  "short_name": "Prompt-Armor",
+  "description": "Write-protection for AI prompts. One change = prompt self-destructs.",
+  "start_url": "/Prompt_Copyrighting/",
+  "scope": "/Prompt_Copyrighting/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "orientation": "any",
+  "categories": ["developer", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

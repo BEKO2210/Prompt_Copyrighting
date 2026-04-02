@@ -1,0 +1,36 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+
+<header class="border-b border-armor-border bg-armor-dark/80 backdrop-blur-md sticky top-0 z-50">
+  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href={base} class="flex items-center gap-3 group">
+      <img
+        src={`${base}logo.png`}
+        alt="Prompt-Armor"
+        width="32"
+        height="32"
+        class="object-contain"
+      />
+      <span class="text-armor-white font-semibold text-lg tracking-tight group-hover:text-armor-accent transition-colors">
+        Prompt-Armor
+      </span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm">
+      <a
+        href={`${base}vault`}
+        class="text-armor-muted hover:text-armor-white transition-colors"
+      >
+        Vault API
+      </a>
+      <a
+        href="https://github.com/BEKO2210/Prompt_Copyrighting"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-armor-muted hover:text-armor-white transition-colors"
+      >
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>

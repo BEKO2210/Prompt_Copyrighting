@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt-Armor | Schütze deine KI-Prompts</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0b;
+            --surface-color: #1a1a1e;
+            --surface-hover: #25252b;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-color: #10b981;
+            --accent-hover: #059669;
+            --accent-glow: rgba(16, 185, 129, 0.3);
+            --border-color: #374151;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #111827 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-copy {
+            background-color: #374151;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-copy:hover {
+            background-color: #4b5563;
+        }
+
+        .btn-copy.copied {
+            background-color: var(--accent-color);
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .output-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .armor-output {
+            width: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            color: #10b981;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            resize: vertical;
+            white-space: pre-wrap;
+        }
+
+        .armor-output::placeholder {
+            color: #374151;
+        }
+
+        .info-box {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            font-size: 1.5rem;
+        }
+
+        .info-content h3 {
+            color: var(--accent-color);
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .info-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .saved-prompts {
+            margin-top: 1rem;
+        }
+
+        .prompt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .prompt-item {
+            background-color: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+
+        .prompt-item:hover {
+            border-color: var(--accent-color);
+        }
+
+        .prompt-info h4 {
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .prompt-meta {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--accent-color);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .vault-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .vault-badge.loading {
+            background-color: #374151;
+            color: var(--text-muted);
+        }
+
+        .vault-badge.online {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        .vault-badge.offline {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .prompt-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .prompt-actions {
+                width: 100%;
+            }
+            
+            .prompt-actions button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🛡️ Prompt-Armor</h1>
+        <p>Schütze deine wertvollen KI-Prompts vor Diebstahl und Manipulation</p>
+        <div id="vault-status" class="vault-badge loading">
+            <span class="spinner"></span> Vault wird geprüft...
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Info Box -->
+        <div class="info-box">
+            <div class="info-icon">💡</div>
+            <div class="info-content">
+                <h3>Wie funktioniert der Schutz?</h3>
+                <p>Dein Prompt wird Base64-kodiert und mit einem SHA256-Hash versehen. Du erhältst einen geschützten Block, den du in jede KI-Anwendung einfügen kannst. Die KI entschlüsselt und führt den Prompt aus, ohne den Originaltext preiszugeben.</p>
+            </div>
+        </div>
+
+        <!-- Eingabe Bereich -->
+        <div class="card">
+            <h2 class="card-title">📝 Prompt Eingeben</h2>
+            
+            <div id="success-message" class="success-message">
+                ✅ Prompt erfolgreich geschützt und gespeichert!
+            </div>
+
+            <div class="form-group">
+                <label for="title">Titel (zur Identifikation)</label>
+                <input type="text" id="title" placeholder="z.B. SaaS Landingpage Generator">
+            </div>
+
+            <div class="form-group">
+                <label for="raw-prompt">Dein KI-Prompt (Klartext)</label>
+                <textarea id="raw-prompt" placeholder="Gib hier deinen wertvollen Prompt ein, den du schützen möchtest...
+
+Beispiel:
+Du bist ein erfahrener Copywriter. Erstelle eine überzeugende Landingpage für ein SaaS-Produkt im Bereich..."></textarea>
+            </div>
+
+            <button id="generate-btn" class="btn btn-primary">
+                <span>🛡️</span> Prompt Schützen & Speichern
+            </button>
+        </div>
+
+        <!-- Ausgabe Bereich -->
+        <div class="card" id="output-card" style="display: none;">
+            <div class="output-header">
+                <h2 class="card-title">🔒 Geschützter Armor-Block</h2>
+                <button id="copy-btn" class="btn btn-copy">
+                    📋 Kopieren
+                </button>
+            </div>
+            
+            <textarea id="armor-output" readonly placeholder="Das Ergebnis erscheint hier..."></textarea>
+            
+            <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <strong>So verwendest du es:</strong>
+                <ol style="margin: 0.5rem 0 0 1.25rem; line-height: 1.6;">
+                    <li>Klicke auf „Kopieren"</li>
+                    <li>Füge den Armor-Block in ChatGPT, Claude oder eine andere KI ein</li>
+                    <li>Die KI entschlüsselt und führt deinen Prompt automatisch aus</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Gespeicherte Prompts -->
+        <div class="card">
+            <h2 class="card-title">📚 Gespeicherte Prompts</h2>
+            <div id="prompt-list" class="prompt-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Lade Prompts...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API URL (Relativer Pfad - funktioniert automatisch auf dem gleichen Server)
+        const API_URL = "/api/prompts";
+
+        // Elemente laden
+        const generateBtn = document.getElementById('generate-btn');
+        const titleInput = document.getElementById('title');
+        const rawPromptInput = document.getElementById('raw-prompt');
+        const outputCard = document.getElementById('output-card');
+        const outputArea = document.getElementById('armor-output');
+        const copyBtn = document.getElementById('copy-btn');
+        const promptListDiv = document.getElementById('prompt-list');
+        const successMessage = document.getElementById('success-message');
+
+        // Alle Prompts laden
+        async function loadPrompts() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API Fehler");
+                const prompts = await response.json();
+                
+                promptListDiv.innerHTML = '';
+                
+                if (prompts.length === 0) {
+                    promptListDiv.innerHTML = `
+                        <div class="empty-state">
+                            <p>Noch keine Prompts gespeichert.</p>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Erstelle oben deinen ersten geschützten Prompt!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                prompts.forEach(p => {
+                    const date = new Date(p.created_at).toLocaleString('de-DE', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const div = document.createElement('div');
+                    div.className = 'prompt-item';
+                    div.innerHTML = `
+                        <div class="prompt-info">
+                            <h4>${escapeHtml(p.title)}</h4>
+                            <div class="prompt-meta">ID: ${p.id} | Gespeichert: ${date}</div>
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="btn btn-copy btn-small copy-saved-btn" data-id="${p.id}">
+                                📋 Kopieren
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Event Listener für den Kopieren-Button
+                    div.querySelector('.copy-saved-btn').addEventListener('click', async function() {
+                        const btn = this;
+                        const promptId = btn.dataset.id;
+                        
+                        try {
+                            const response = await fetch(`${API_URL}/${promptId}`);
+                            if (!response.ok) throw new Error("Nicht gefunden");
+                            const prompt = await response.json();
+                            
+                            await navigator.clipboard.writeText(prompt.armor_block);
+                            
+                            // Visuelles Feedback
+                            const originalText = btn.innerHTML;
+                            btn.innerHTML = '✅ Kopiert!';
+                            btn.classList.add('copied');
+                            
+                            setTimeout(() => {
+                                btn.innerHTML = originalText;
+                                btn.classList.remove('copied');
+                            }, 2000);
+                            
+                        } catch (error) {
+                            alert('Fehler beim Kopieren: ' + error.message);
+                        }
+                    });
+                    promptListDiv.appendChild(div);
+                });
+            } catch (error) {
+                promptListDiv.innerHTML = `
+                    <div class="empty-state">
+                        <p style="color: var(--danger-color);">⚠️ Fehler beim Laden</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Stelle sicher, dass das Backend läuft.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Kopieren Button
+        copyBtn.addEventListener('click', async () => {
+            if (!outputArea.value) return;
+            
+            try {
+                await navigator.clipboard.writeText(outputArea.value);
+                copyBtn.innerHTML = '✅ Kopiert!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = '📋 Kopieren';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // Fallback für ältere Browser
+                outputArea.select();
+                document.execCommand('copy');
+                alert('Armor-Block wurde in die Zwischenablage kopiert!');
+            }
+        });
+
+        // Neuen Prompt speichern
+        generateBtn.addEventListener('click', async () => {
+            const title = titleInput.value.trim();
+            const rawText = rawPromptInput.value.trim();
+
+            if (!title || !rawText) {
+                alert("Bitte gib einen Titel und einen Prompt ein!");
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner" style="width: 18px; height: 18px;"></span> Schütze...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: title, raw_prompt: rawText })
+                });
+
+                if (!response.ok) throw new Error("Fehler beim Speichern");
+
+                const data = await response.json();
+                
+                // Ergebnis anzeigen
+                outputArea.value = data.armor_block;
+                outputCard.style.display = 'block';
+                
+                // Erfolgsmeldung
+                successMessage.classList.add('show');
+                setTimeout(() => successMessage.classList.remove('show'), 3000);
+                
+                // Eingabefelder leeren
+                titleInput.value = '';
+                rawPromptInput.value = '';
+
+                // Liste aktualisieren
+                loadPrompts();
+
+                // Zur Ausgabe scrollen
+                outputCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch (error) {
+                alert("Fehler! Stelle sicher, dass das Backend läuft.");
+                console.error(error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span>🛡️</span> Prompt Schützen & Speichern';
+            }
+        });
+
+        // HTML escapen
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Vault Status prüfen
+        async function checkVaultStatus() {
+            const statusBadge = document.getElementById('vault-status');
+            try {
+                const response = await fetch('/api/vault/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusBadge.className = 'vault-badge online';
+                    statusBadge.innerHTML = `🔐 Vault Online (${data.prompts_loaded} Prompts)`;
+                } else {
+                    throw new Error('Nicht erreichbar');
+                }
+            } catch (error) {
+                statusBadge.className = 'vault-badge offline';
+                statusBadge.innerHTML = '🔓 Vault Offline (nur Base64 verfügbar)';
+            }
+        }
+
+        // Beim Start laden
+        loadPrompts();
+        checkVaultStatus();
+    </script>
+
+</body>
+</html>

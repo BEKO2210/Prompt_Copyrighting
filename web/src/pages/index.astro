@@ -1,0 +1,422 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ArmorGenerator from '../components/ArmorGenerator.astro';
+import UpdatePopup from '../components/UpdatePopup.astro';
+---
+
+<Layout title="Prompt-Armor -- Write-Protection for AI Prompts">
+  <Header />
+
+  <main class="flex-1">
+    <!-- Hero -->
+    <section class="max-w-5xl mx-auto px-6 pt-20 pb-16">
+      <div class="max-w-3xl">
+        <div id="version-badge" class="inline-block px-3 py-1 mb-6 text-xs font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
+          Loading...
+        </div>
+        <script define:vars={{ base: import.meta.env.BASE_URL }}>
+          fetch(base + 'version.json?_=' + Date.now())
+            .then(r => r.json())
+            .then(d => {
+              document.getElementById('version-badge').textContent = 'v' + d.version + ' -- Open Source';
+            })
+            .catch(() => {
+              document.getElementById('version-badge').textContent = 'Open Source';
+            });
+        </script>
+        <h1 class="text-4xl sm:text-5xl font-bold text-armor-white leading-tight tracking-tight mb-6">
+          Complete security<br />for AI prompts.
+        </h1>
+        <p class="text-lg text-armor-muted leading-relaxed max-w-2xl mb-4">
+          Two layers of protection that no other open-source tool combines:
+        </p>
+        <div class="flex flex-wrap gap-3 mb-8">
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-armor-green border border-armor-green/30 rounded-full bg-armor-green/5">
+            <span class="w-1.5 h-1.5 rounded-full bg-armor-green"></span>
+            ARMOR -- Tamper-Evidence
+          </span>
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-armor-accent border border-armor-accent/30 rounded-full bg-armor-accent/5">
+            <span class="w-1.5 h-1.5 rounded-full bg-armor-accent"></span>
+            VAULT -- Confidentiality
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="#generator"
+            class="inline-flex px-6 py-3 bg-armor-accent hover:bg-armor-accent-hover text-white font-semibold rounded-lg transition-all duration-200"
+          >
+            Try Armor
+          </a>
+          <a
+            href="#architecture"
+            class="inline-flex px-6 py-3 border border-armor-border text-armor-muted hover:text-armor-white hover:border-armor-white/20 rounded-lg transition-all duration-200"
+          >
+            See architecture
+          </a>
+          <a
+            href={`${import.meta.env.BASE_URL}vault`}
+            class="inline-flex px-6 py-3 border border-armor-accent/30 text-armor-accent hover:text-armor-accent-hover hover:border-armor-accent/50 rounded-lg transition-all duration-200"
+          >
+            Vault API Docs
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security Architecture -->
+    <section id="architecture" class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-3">Two pillars of prompt security</h2>
+      <p class="text-armor-muted text-sm mb-12 max-w-2xl">
+        Prompt-Armor and Prompt-Vault solve two fundamentally different problems. Together, they provide complete protection for your AI prompts.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- ARMOR Pillar -->
+        <div class="bg-armor-surface border border-armor-green/20 rounded-xl p-6 space-y-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-armor-green/10 border border-armor-green/30 flex items-center justify-center">
+              <svg class="w-5 h-5 text-armor-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-armor-white font-bold">PROMPT-ARMOR</h3>
+              <span class="text-xs text-armor-green font-medium">Tamper-Evidence</span>
+            </div>
+          </div>
+
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Encodes prompts into Base64 with a SHA-256 integrity hash. If anyone changes a single character, the AI detects it and refuses execution.
+          </p>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-green">--</span> Base64 encoding with SHA-256 hash
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-green">--</span> Client-side, runs in browser
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-green">--</span> Works with any AI model
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-green">--</span> Prompt visible but tamper-proof
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-armor-border">
+            <p class="text-xs text-armor-muted">
+              <span class="text-armor-green font-medium">Analogy:</span> A tamper-evident seal on a package. You can see the contents, but you know if someone opened it.
+            </p>
+          </div>
+        </div>
+
+        <!-- VAULT Pillar -->
+        <div class="bg-armor-surface border border-armor-accent/20 rounded-xl p-6 space-y-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-armor-accent/10 border border-armor-accent/30 flex items-center justify-center">
+              <svg class="w-5 h-5 text-armor-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-armor-white font-bold">PROMPT-VAULT</h3>
+              <span class="text-xs text-armor-accent font-medium">Confidentiality</span>
+            </div>
+          </div>
+
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Server-side API proxy with AES-256-GCM encrypted storage. Clients send a prompt ID, the server executes it. The prompt content is never exposed.
+          </p>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-accent">--</span> AES-256-GCM encryption at rest
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-accent">--</span> Zero-width Unicode watermarking
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-accent">--</span> Bearer token auth + rate limiting
+            </div>
+            <div class="flex items-center gap-2 text-xs text-armor-text">
+              <span class="text-armor-accent">--</span> Prompt invisible to clients
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-armor-border">
+            <p class="text-xs text-armor-muted">
+              <span class="text-armor-accent font-medium">Analogy:</span> A bank vault. The contents are completely hidden. You interact through a controlled interface.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture Flow -->
+      <div class="mt-10 bg-armor-dark border border-armor-border rounded-xl p-6 sm:p-8">
+        <h3 class="text-armor-white font-semibold text-sm mb-6 uppercase tracking-wider">Architecture</h3>
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Armor Flow -->
+          <div>
+            <p class="text-xs text-armor-green font-semibold uppercase tracking-wider mb-4">Armor Flow</p>
+            <div class="flex flex-col items-center gap-2 text-xs">
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Your Prompt</span>
+              <span class="text-armor-green text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-green/10 border border-armor-green/30 rounded-md text-armor-green font-medium">Base64 + SHA-256</span>
+              <span class="text-armor-green text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Armor Block</span>
+            </div>
+            <p class="text-xs text-armor-muted mt-3 text-center">Client-side. Paste into any AI chat. Tamper = detection.</p>
+          </div>
+          <!-- Vault Flow -->
+          <div>
+            <p class="text-xs text-armor-accent font-semibold uppercase tracking-wider mb-4">Vault Flow</p>
+            <div class="flex flex-col items-center gap-2 text-xs">
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Client API Call</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-accent/10 border border-armor-accent/30 rounded-md text-armor-accent font-medium">Vault Server (AES-256)</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Anthropic API</span>
+              <span class="text-armor-accent text-lg leading-none">&darr;</span>
+              <span class="w-full text-center px-3 py-2 bg-armor-surface border border-armor-border rounded-md text-armor-text">Watermarked Response</span>
+            </div>
+            <p class="text-xs text-armor-muted mt-3 text-center">Server-side. Prompt never leaves the server.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How Armor Works -->
+    <section id="how-it-works" class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-12">How Armor works</h2>
+      <div class="grid sm:grid-cols-3 gap-8">
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-green font-bold text-sm">
+            01
+          </div>
+          <h3 class="text-armor-white font-semibold">Write your prompt</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Write your AI prompt normally. Any prompt works -- landing pages, APIs, emails, code generation.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-green font-bold text-sm">
+            02
+          </div>
+          <h3 class="text-armor-white font-semibold">Armor encodes it</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            The prompt gets Base64-encoded with a SHA-256 integrity hash and a strict system instruction wrapper.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-green font-bold text-sm">
+            03
+          </div>
+          <h3 class="text-armor-white font-semibold">Tamper = failure</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Change one character in the encoded block and the math breaks. The AI detects the corruption and refuses to execute.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Demo -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">The principle</h2>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-6 space-y-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-armor-green"></div>
+            <span class="text-sm font-medium text-armor-green">Original block</span>
+          </div>
+          <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
+SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-green font-bold bg-armor-green/10 px-0.5 rounded">X</span>MgYSB0ZXN0
+--- END ARMOR BLOCK ---</pre>
+          <p class="text-xs text-armor-green">AI decodes and executes correctly.</p>
+        </div>
+        <div class="bg-armor-surface border border-armor-border rounded-lg p-6 space-y-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-armor-red"></div>
+            <span class="text-sm font-medium text-armor-red">Modified block (1 char changed)</span>
+          </div>
+          <pre class="text-xs text-armor-muted leading-relaxed">--- BEGIN ARMOR BLOCK ---
+SGVsbG8gV29ybGQhIFRoaXMga<span class="text-armor-red font-bold bg-armor-red/10 px-0.5 rounded">Z</span>MgYSB0ZXN0
+--- END ARMOR BLOCK ---</pre>
+          <p class="text-xs text-armor-red">[PROMPT-ARMOR] Integrity check failed.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How Vault Works -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-12">How Vault works</h2>
+      <div class="grid sm:grid-cols-3 gap-8">
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            01
+          </div>
+          <h3 class="text-armor-white font-semibold">Encrypt your prompts</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Write prompts as Markdown files. The CLI tool encrypts them into a single AES-256-GCM vault file.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            02
+          </div>
+          <h3 class="text-armor-white font-semibold">Client sends prompt ID</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            Clients authenticate with a Bearer token and send a prompt ID + variables. They never see the prompt content.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-lg bg-armor-surface border border-armor-border flex items-center justify-center text-armor-accent font-bold text-sm">
+            03
+          </div>
+          <h3 class="text-armor-white font-semibold">Watermarked response</h3>
+          <p class="text-armor-muted text-sm leading-relaxed">
+            The server executes the prompt via the Anthropic API and returns the response with invisible zero-width character watermarking.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generator -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-3">Generator</h2>
+      <p class="text-armor-muted text-sm mb-8 max-w-2xl">
+        Paste your prompt below to generate a protected armor block. You can also verify existing blocks to check if they have been tampered with.
+      </p>
+      <div class="bg-armor-surface border border-armor-border rounded-xl p-6 sm:p-8">
+        <ArmorGenerator />
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-3">Use cases</h2>
+      <p class="text-armor-muted text-sm mb-10 max-w-2xl">
+        Choose the right tool for your scenario -- or combine both for maximum protection.
+      </p>
+
+      <!-- Solo / Armor use cases -->
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="w-2 h-2 rounded-full bg-armor-green"></span>
+          <h3 class="text-armor-green font-semibold text-sm uppercase tracking-wider">Armor -- Solo developers and teams</h3>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          {[
+            { title: 'Prompt marketplaces', desc: 'Sell prompts that cannot be silently modified by buyers before claiming they do not work.' },
+            { title: 'Team prompt libraries', desc: 'Share standardized prompts across your team with guaranteed consistency.' },
+            { title: 'Educational settings', desc: 'Distribute assignment prompts to students that cannot be tweaked to get easier answers.' },
+            { title: 'Open-source prompts', desc: 'Publish prompts publicly with proof of authorship and integrity verification.' },
+          ].map(({ title, desc }) => (
+            <div class="bg-armor-dark border border-armor-green/10 rounded-lg p-5 space-y-2">
+              <h3 class="text-armor-white font-semibold text-sm">{title}</h3>
+              <p class="text-armor-muted text-xs leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Commercial / Vault use cases -->
+      <div>
+        <div class="flex items-center gap-2 mb-5">
+          <span class="w-2 h-2 rounded-full bg-armor-accent"></span>
+          <h3 class="text-armor-accent font-semibold text-sm uppercase tracking-wider">Vault -- Commercial providers</h3>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          {[
+            { title: 'AI-powered SaaS products', desc: 'Run proprietary prompts server-side. Customers use the output but never see the prompt engineering behind it.' },
+            { title: 'Prompt-as-a-Service', desc: 'Monetize your prompt library via API access. Watermarking traces every response back to the client.' },
+            { title: 'Enterprise prompt governance', desc: 'Central vault for approved prompts. Role-based access, audit logs, and rate limiting out of the box.' },
+            { title: 'Embedded AI features', desc: 'Ship AI capabilities in your app without exposing your competitive advantage -- the prompts stay on your server.' },
+          ].map(({ title, desc }) => (
+            <div class="bg-armor-dark border border-armor-accent/10 rounded-lg p-5 space-y-2">
+              <h3 class="text-armor-white font-semibold text-sm">{title}</h3>
+              <p class="text-armor-muted text-xs leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Security Stack -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-8">Security stack</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead>
+            <tr class="border-b border-armor-border">
+              <th class="py-3 pr-4 text-armor-muted font-medium text-xs uppercase tracking-wider">Layer</th>
+              <th class="py-3 pr-4 text-armor-muted font-medium text-xs uppercase tracking-wider">Technology</th>
+              <th class="py-3 pr-4 text-armor-muted font-medium text-xs uppercase tracking-wider">Tool</th>
+              <th class="py-3 text-armor-muted font-medium text-xs uppercase tracking-wider">Protection</th>
+            </tr>
+          </thead>
+          <tbody class="text-armor-text">
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4 text-armor-white font-medium">Integrity</td>
+              <td class="py-3 pr-4">SHA-256 + Base64</td>
+              <td class="py-3 pr-4"><span class="text-armor-green">Armor</span></td>
+              <td class="py-3">Detects any modification</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4 text-armor-white font-medium">Encryption</td>
+              <td class="py-3 pr-4">AES-256-GCM + scrypt</td>
+              <td class="py-3 pr-4"><span class="text-armor-accent">Vault</span></td>
+              <td class="py-3">Prompts encrypted at rest</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4 text-armor-white font-medium">Authentication</td>
+              <td class="py-3 pr-4">Bearer token (SHA-256)</td>
+              <td class="py-3 pr-4"><span class="text-armor-accent">Vault</span></td>
+              <td class="py-3">Client identity verification</td>
+            </tr>
+            <tr class="border-b border-armor-border/50">
+              <td class="py-3 pr-4 text-armor-white font-medium">Watermarking</td>
+              <td class="py-3 pr-4">Zero-width Unicode</td>
+              <td class="py-3 pr-4"><span class="text-armor-accent">Vault</span></td>
+              <td class="py-3">Response traceability</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-armor-white font-medium">Rate Limiting</td>
+              <td class="py-3 pr-4">express-rate-limit</td>
+              <td class="py-3 pr-4"><span class="text-armor-accent">Vault</span></td>
+              <td class="py-3">Abuse prevention</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Transparency -->
+    <section class="max-w-5xl mx-auto px-6 py-16 border-t border-armor-border">
+      <h2 class="text-2xl font-bold text-armor-white mb-6">What this is (and is not)</h2>
+      <div class="max-w-2xl space-y-4 text-sm text-armor-muted leading-relaxed">
+        <p>
+          <strong class="text-armor-green">Prompt-Armor</strong> is <strong class="text-armor-white">tamper-evidence</strong>, not encryption.
+          Base64 can be decoded by anyone. The protection comes from the SHA-256 hash and the system instruction contract --
+          if someone changes anything, the AI detects the corruption and refuses to execute.
+        </p>
+        <p>
+          <strong class="text-armor-accent">Prompt-Vault</strong> is <strong class="text-armor-white">real cryptographic security</strong>.
+          AES-256-GCM encryption means the prompt content is mathematically unreadable without the key.
+          The prompt never leaves the server, never reaches the client.
+        </p>
+        <p>
+          Together they cover both sides of prompt security:
+          <strong class="text-armor-white">integrity</strong> (did someone tamper with it?) and
+          <strong class="text-armor-white">confidentiality</strong> (can someone read it?).
+          No other open-source tool combines both in one project.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+  <UpdatePopup />
+</Layout>

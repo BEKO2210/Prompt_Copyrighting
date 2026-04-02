@@ -10,28 +10,30 @@ import base64
 import os
 import httpx
 from typing import Optional, Dict, Any
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Lade .env
+load_dotenv()
 
 app = FastAPI(title="Prompt-Armor API")
 
 # --- STATIC FILES ---
-# Mounte den static Ordner für CSS, JS, Bilder etc.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # --- CORS KONFIGURATION ---
-# Hier trägst du ein, wer auf die API zugreifen darf.
-# localhost:4321 ist der Standard-Port deines Astro-Dev-Servers.
 origins = [
     "http://localhost:4321",
     "http://127.0.0.1:4321",
     "http://localhost:8000",
-    "https://beko2210.github.io" # Falls die API später live ist
+    "https://beko2210.github.io"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # Erlaubt GET, POST, PUT, DELETE etc.
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -39,10 +41,13 @@ app.add_middleware(
 DB_CONFIG = {
     "dbname": "prompt_armor",
     "user": "postgres",
-    "password": "1518", # Wieder dein pgAdmin-Passwort eintragen!
+    "password": "1518",
     "host": "localhost",
     "port": "5432"
 }
+
+# --- OPENAI CLIENT ---
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- DATENMODELLE ---
 class PromptRequest(BaseModel):
@@ -54,6 +59,10 @@ class ArmorResponse(BaseModel):
     title: str
     armor_block: str
     hash: str
+
+class OpenAIRunRequest(BaseModel):
+    prompt_id: int
+    variables: Optional[Dict[str, str]] = {}
 
 # --- KERNLOGIK ---
 def generate_armor(raw_text: str) -> dict:
@@ -120,7 +129,7 @@ def create_protected_prompt(request: PromptRequest):
 
 @app.get("/api/prompts")
 def get_all_prompts():
-    """Gibt eine Liste aller gespeicherten Prompts zurück (z.B. für ein Dashboard)."""
+    """Gibt eine Liste aller gespeicherten Prompts zurück."""
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -158,8 +167,83 @@ def get_protected_prompt(prompt_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Datenbankfehler: {str(e)}")
 
+
 # =============================================================================
-# VAULT INTEGRATION - Proxy zu Prompt-Vault (Node.js Server)
+# OPENAI SERVER-SIDE EXECUTION (OHNE PROMPT EXPOSURE!)
+# =============================================================================
+
+@app.get("/run/{prompt_id}")
+async def run_prompt_openai(
+    prompt_id: int,
+    topic: str = "",
+    keyword: str = "",
+    word_count: str = "800"
+):
+    """
+    Führt einen Prompt mit OpenAI aus - DER PROMPT WIRD NIE AN DEN CLIENT GESENDET!
+    
+    Beispiel: /run/1?topic=KI&keyword=AI&word_count=500
+    """
+    try:
+        # 1. Hole Prompt aus Datenbank (bleibt auf Server!)
+        conn = psycopg2.connect(**DB_CONFIG)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT title, raw_prompt FROM armored_prompts WHERE id = %s;", (prompt_id,))
+        prompt = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt nicht gefunden")
+        
+        # 2. Ersetze Variablen im Prompt
+        prompt_text = prompt["raw_prompt"]
+        if topic:
+            prompt_text = prompt_text.replace("{{topic}}", topic)
+            prompt_text = prompt_text.replace("{{thema}}", topic)
+        if keyword:
+            prompt_text = prompt_text.replace("{{keyword}}", keyword)
+        if word_count:
+            prompt_text = prompt_text.replace("{{word_count}}", word_count)
+            prompt_text = prompt_text.replace("{{words}}", word_count)
+        
+        # 3. Sende AN OPENAI (Client sieht nie den Prompt!)
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",  # oder gpt-4, gpt-3.5-turbo
+            messages=[
+                {"role": "system", "content": "Du bist ein hilfreicher Assistent. Folge den Anweisungen des Users genau."},
+                {"role": "user", "content": prompt_text}
+            ],
+            max_tokens=2000
+        )
+        
+        # 4. Gebe NUR die Antwort zurück
+        return {
+            "response": response.choices[0].message.content,
+            "prompt_id": prompt_id,
+            "model": response.model,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            },
+            "note": "Der Prompt wurde server-seitig ausgeführt und ist nicht sichtbar."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fehler: {str(e)}")
+
+
+@app.get("/runner", response_class=FileResponse)
+async def runner_page():
+    """Web-Oberfläche zum Ausführen von Prompts (OpenAI)."""
+    return FileResponse("static/runner.html")
+
+
+# =============================================================================
+# VAULT INTEGRATION (Anthropic - optional)
 # =============================================================================
 
 VAULT_URL = os.getenv("VAULT_URL", "http://localhost:3700")
@@ -182,7 +266,7 @@ async def vault_health():
 
 @app.get("/api/vault/prompts")
 async def vault_prompts():
-    """Listet alle verfügbaren Vault-Prompts (nur Metadaten)."""
+    """Listet alle verfügbaren Vault-Prompts."""
     if not VAULT_TOKEN:
         raise HTTPException(status_code=500, detail="VAULT_TOKEN nicht konfiguriert")
     
@@ -196,91 +280,3 @@ async def vault_prompts():
             return response.json()
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Vault Fehler: {str(e)}")
-
-@app.post("/api/vault/run")
-async def vault_run(request: VaultRunRequest):
-    """Führt einen Vault-Prompt über den Proxy aus."""
-    if not VAULT_TOKEN:
-        raise HTTPException(status_code=500, detail="VAULT_TOKEN nicht konfiguriert")
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{VAULT_URL}/api/run",
-                headers={"Authorization": f"Bearer {VAULT_TOKEN}"},
-                json={
-                    "prompt_id": request.prompt_id,
-                    "variables": request.variables,
-                    "model": request.model
-                },
-                timeout=60.0
-            )
-            return response.json()
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Vault Fehler: {str(e)}")
-
-
-# =============================================================================
-# EINFACHER RUN ENDPOINT - GET /run/{prompt_id}
-# =============================================================================
-
-@app.get("/run/{prompt_id}")
-async def run_prompt_simple(
-    prompt_id: str, 
-    topic: str = "", 
-    keyword: str = "", 
-    word_count: str = "800"
-):
-    """
-    Führt einen Vault-Prompt aus und gibt nur die Antwort zurück.
-    Der Prompt wird NIE an den Client gesendet!
-    
-    Beispiel: /run/seo-article?topic=KI&keyword=AI&word_count=500
-    """
-    if not VAULT_TOKEN:
-        raise HTTPException(
-            status_code=500, 
-            detail="VAULT_TOKEN nicht konfiguriert. Bitte .env Datei prüfen."
-        )
-    
-    try:
-        # Baue Variablen
-        variables = {}
-        if topic:
-            variables["topic"] = topic
-        if keyword:
-            variables["keyword"] = keyword
-        if word_count:
-            variables["word_count"] = word_count
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{VAULT_URL}/api/run",
-                headers={"Authorization": f"Bearer {VAULT_TOKEN}"},
-                json={
-                    "prompt_id": prompt_id,
-                    "variables": variables
-                },
-                timeout=60.0
-            )
-            
-            result = response.json()
-            
-            # Gebe nur die Antwort zurück, NICHT den Prompt!
-            return {
-                "response": result["response"],
-                "prompt_id": result["prompt_id"],
-                "model": result["model"],
-                "usage": result.get("usage", {})
-            }
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fehler: {str(e)}")
-
-
-@app.get("/vault-runner", response_class=FileResponse)
-async def vault_runner_page():
-    """Einfache Web-Oberfläche zum Ausführen von Vault-Prompts."""
-    return FileResponse("static/vault-runner.html")

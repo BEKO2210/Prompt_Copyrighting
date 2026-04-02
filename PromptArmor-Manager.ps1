@@ -4,7 +4,7 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Globale Variablen für Prozesse
+# Globale Variablen fur Prozesse
 $script:fastapiProcess = $null
 $script:vaultProcess = $null
 $script:logForm = $null
@@ -18,7 +18,7 @@ function Create-LogWindow {
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::FromArgb(10, 10, 11)
     
-    # TextBox für Logs
+    # TextBox fur Logs
     $textBox = New-Object System.Windows.Forms.TextBox
     $textBox.Multiline = $true
     $textBox.ScrollBars = "Vertical"
@@ -34,7 +34,7 @@ function Create-LogWindow {
     $script:logTextBox = $textBox
 }
 
-# Funktion: Log hinzufügen
+# Funktion: Log hinzufugen
 function Add-Log {
     param([string]$message, [string]$color = "Green")
     
@@ -76,7 +76,7 @@ function Start-FastAPI {
     $process.BeginErrorReadLine()
     
     $script:fastapiProcess = $process
-    Add-Log "✅ FastAPI gestartet (PID: $($process.Id))" "Green"
+    Add-Log "[OK] FastAPI gestartet (PID: $($process.Id))" "Green"
 }
 
 # Funktion: Vault starten
@@ -108,7 +108,7 @@ function Start-Vault {
     $process.BeginErrorReadLine()
     
     $script:vaultProcess = $process
-    Add-Log "✅ Vault gestartet (PID: $($process.Id))" "Green"
+    Add-Log "[OK] Vault gestartet (PID: $($process.Id))" "Green"
 }
 
 # Funktion: Server stoppen
@@ -117,12 +117,12 @@ function Stop-Servers {
     
     if ($script:fastapiProcess -ne $null -and -not $script:fastapiProcess.HasExited) {
         Stop-Process -Id $script:fastapiProcess.Id -Force -ErrorAction SilentlyContinue
-        Add-Log "🛑 FastAPI beendet" "Red"
+        Add-Log "[STOP] FastAPI beendet" "Red"
     }
     
     if ($script:vaultProcess -ne $null -and -not $script:vaultProcess.HasExited) {
         Stop-Process -Id $script:vaultProcess.Id -Force -ErrorAction SilentlyContinue
-        Add-Log "🛑 Vault beendet" "Red"
+        Add-Log "[STOP] Vault beendet" "Red"
     }
     
     # Auch alle verwaisten Prozesse killen
@@ -134,7 +134,7 @@ function Stop-Servers {
     $script:vaultProcess = $null
 }
 
-# Funktion: Status prüfen
+# Funktion: Status prufen
 function Test-ServersRunning {
     $fastapiRunning = $script:fastapiProcess -ne $null -and -not $script:fastapiProcess.HasExited
     $vaultRunning = $script:vaultProcess -ne $null -and -not $script:vaultProcess.HasExited
@@ -143,7 +143,7 @@ function Test-ServersRunning {
 
 # Haupt-GUI erstellen
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "🛡️ Prompt-Armor Server Manager"
+$form.Text = "Prompt-Armor Server Manager"
 $form.Size = New-Object System.Drawing.Size(500, 350)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = [System.Drawing.Color]::FromArgb(10, 10, 11)
@@ -153,11 +153,11 @@ $form.Icon = [System.Drawing.SystemIcons]::Shield
 
 # Titel
 $titleLabel = New-Object System.Windows.Forms.Label
-$titleLabel.Text = "🛡️ Prompt-Armor"
+$titleLabel.Text = "Prompt-Armor"
 $titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 20, [System.Drawing.FontStyle]::Bold)
 $titleLabel.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
 $titleLabel.AutoSize = $true
-$titleLabel.Location = New-Object System.Drawing.Point(130, 20)
+$titleLabel.Location = New-Object System.Drawing.Point(160, 20)
 $form.Controls.Add($titleLabel)
 
 # Untertitel
@@ -179,7 +179,7 @@ $form.Controls.Add($statusPanel)
 
 # Status Labels
 $fastapiStatusLabel = New-Object System.Windows.Forms.Label
-$fastapiStatusLabel.Text = "❌ FastAPI (Port 8000): Offline"
+$fastapiStatusLabel.Text = "[OFF] FastAPI (Port 8000): Offline"
 $fastapiStatusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11)
 $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
 $fastapiStatusLabel.AutoSize = $true
@@ -187,7 +187,7 @@ $fastapiStatusLabel.Location = New-Object System.Drawing.Point(20, 15)
 $statusPanel.Controls.Add($fastapiStatusLabel)
 
 $vaultStatusLabel = New-Object System.Windows.Forms.Label
-$vaultStatusLabel.Text = "❌ Vault (Port 3700): Offline"
+$vaultStatusLabel.Text = "[OFF] Vault (Port 3700): Offline"
 $vaultStatusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11)
 $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
 $vaultStatusLabel.AutoSize = $true
@@ -196,7 +196,7 @@ $statusPanel.Controls.Add($vaultStatusLabel)
 
 # Button: Server Starten
 $startButton = New-Object System.Windows.Forms.Button
-$startButton.Text = "🚀 Server Starten"
+$startButton.Text = "Server Starten"
 $startButton.Size = New-Object System.Drawing.Size(200, 50)
 $startButton.Location = New-Object System.Drawing.Point(40, 190)
 $startButton.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
@@ -209,7 +209,7 @@ $form.Controls.Add($startButton)
 
 # Button: Server Stoppen
 $stopButton = New-Object System.Windows.Forms.Button
-$stopButton.Text = "🛑 Server Stoppen"
+$stopButton.Text = "Server Stoppen"
 $stopButton.Size = New-Object System.Drawing.Size(200, 50)
 $stopButton.Location = New-Object System.Drawing.Point(260, 190)
 $stopButton.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
@@ -223,7 +223,7 @@ $form.Controls.Add($stopButton)
 
 # Button: Logs anzeigen
 $logButton = New-Object System.Windows.Forms.Button
-$logButton.Text = "📋 Logs anzeigen"
+$logButton.Text = "Logs anzeigen"
 $logButton.Size = New-Object System.Drawing.Size(200, 40)
 $logButton.Location = New-Object System.Drawing.Point(150, 255)
 $logButton.Font = New-Object System.Drawing.Font("Segoe UI", 11)
@@ -243,27 +243,27 @@ $urlLabel.AutoSize = $true
 $urlLabel.Location = New-Object System.Drawing.Point(90, 305)
 $form.Controls.Add($urlLabel)
 
-# Timer für Status-Updates
+# Timer fur Status-Updates
 $timer = New-Object System.Windows.Forms.Timer
-$timer.Interval = 1000  # 1 Sekunde
+$timer.Interval = 1000
 
 $timer.Add_Tick({
     if ($script:fastapiProcess -ne $null) {
         if (-not $script:fastapiProcess.HasExited) {
-            $fastapiStatusLabel.Text = "✅ FastAPI (Port 8000): Online"
+            $fastapiStatusLabel.Text = "[ON] FastAPI (Port 8000): Online"
             $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
         } else {
-            $fastapiStatusLabel.Text = "❌ FastAPI (Port 8000): Offline"
+            $fastapiStatusLabel.Text = "[OFF] FastAPI (Port 8000): Offline"
             $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
         }
     }
     
     if ($script:vaultProcess -ne $null) {
         if (-not $script:vaultProcess.HasExited) {
-            $vaultStatusLabel.Text = "✅ Vault (Port 3700): Online"
+            $vaultStatusLabel.Text = "[ON] Vault (Port 3700): Online"
             $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
         } else {
-            $vaultStatusLabel.Text = "❌ Vault (Port 3700): Offline"
+            $vaultStatusLabel.Text = "[OFF] Vault (Port 3700): Offline"
             $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
         }
     }
@@ -284,13 +284,12 @@ $startButton.Add_Click({
     Start-Sleep -Seconds 2
     Start-Vault
     
-    Add-Log "`r`n✨ Beide Server gestartet!" "Green"
-    Add-Log "🌐 Web Interface: http://localhost:8000" "Cyan"
-    Add-Log "🔐 Vault Health: http://localhost:3700/api/health" "Cyan"
+    Add-Log "Beide Server gestartet!" "Green"
+    Add-Log "Web Interface: http://localhost:8000" "Cyan"
+    Add-Log "Vault Health: http://localhost:3700/api/health" "Cyan"
     
-    # URLs im Browser öffnen (optional)
     $result = [System.Windows.Forms.MessageBox]::Show(
-        "Server gestartet!`n`nWeb Interface öffnen?", 
+        "Server gestartet!`n`nWeb Interface oeffnen?", 
         "Prompt-Armor", 
         "YesNo", 
         "Information"
@@ -324,7 +323,7 @@ $logButton.Add_Click({
     $script:logForm.Focus()
 })
 
-# Form schließen = Server stoppen
+# Form schliessen = Server stoppen
 $form.Add_FormClosing({
     Stop-Servers
     $timer.Stop()

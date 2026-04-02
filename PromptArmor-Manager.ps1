@@ -4,147 +4,33 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Globale Variablen fur Prozesse
+# Globale Variablen
 $script:fastapiProcess = $null
 $script:vaultProcess = $null
-$script:logForm = $null
-$script:logTextBox = $null
-
-# Funktion: Log-Fenster erstellen
-function Create-LogWindow {
-    $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Prompt-Armor Server Logs"
-    $form.Size = New-Object System.Drawing.Size(800, 600)
-    $form.StartPosition = "CenterScreen"
-    $form.BackColor = [System.Drawing.Color]::FromArgb(10, 10, 11)
-    
-    # TextBox fur Logs
-    $textBox = New-Object System.Windows.Forms.TextBox
-    $textBox.Multiline = $true
-    $textBox.ScrollBars = "Vertical"
-    $textBox.Dock = "Fill"
-    $textBox.BackColor = [System.Drawing.Color]::FromArgb(17, 24, 39)
-    $textBox.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
-    $textBox.Font = New-Object System.Drawing.Font("Consolas", 10)
-    $textBox.ReadOnly = $true
-    
-    $form.Controls.Add($textBox)
-    
-    $script:logForm = $form
-    $script:logTextBox = $textBox
-}
-
-# Funktion: Log hinzufugen
-function Add-Log {
-    param([string]$message, [string]$color = "Green")
-    
-    if ($script:logTextBox -ne $null -and -not $script:logTextBox.IsDisposed) {
-        $script:logTextBox.Invoke([Action]{
-            $timestamp = Get-Date -Format "HH:mm:ss"
-            $script:logTextBox.AppendText("[$timestamp] $message`r`n")
-            $script:logTextBox.ScrollToCaret()
-        })
-    }
-}
-
-# Funktion: FastAPI starten
-function Start-FastAPI {
-    Add-Log "Starte FastAPI Server (Port 8000)..." "Yellow"
-    
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "python"
-    $psi.Arguments = "-m uvicorn main:app --host 0.0.0.0 --port 8000"
-    $psi.WorkingDirectory = "C:\Users\belki\Desktop\PromptAmor"
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.CreateNoWindow = $true
-    
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $psi
-    
-    # Output Handler
-    $process.OutputDataReceived += {
-        if ($_.Data) { Add-Log "[FastAPI] $($_.Data)" }
-    }
-    $process.ErrorDataReceived += {
-        if ($_.Data) { Add-Log "[FastAPI ERROR] $($_.Data)" "Red" }
-    }
-    
-    $process.Start() | Out-Null
-    $process.BeginOutputReadLine()
-    $process.BeginErrorReadLine()
-    
-    $script:fastapiProcess = $process
-    Add-Log "[OK] FastAPI gestartet (PID: $($process.Id))" "Green"
-}
-
-# Funktion: Vault starten
-function Start-Vault {
-    Add-Log "Starte Prompt-Vault (Port 3700)..." "Yellow"
-    
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "node"
-    $psi.Arguments = "server.js"
-    $psi.WorkingDirectory = "C:\Users\belki\Desktop\PromptAmor\prompt-vault"
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.CreateNoWindow = $true
-    
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $psi
-    
-    # Output Handler
-    $process.OutputDataReceived += {
-        if ($_.Data) { Add-Log "[Vault] $($_.Data)" }
-    }
-    $process.ErrorDataReceived += {
-        if ($_.Data) { Add-Log "[Vault ERROR] $($_.Data)" "Red" }
-    }
-    
-    $process.Start() | Out-Null
-    $process.BeginOutputReadLine()
-    $process.BeginErrorReadLine()
-    
-    $script:vaultProcess = $process
-    Add-Log "[OK] Vault gestartet (PID: $($process.Id))" "Green"
-}
 
 # Funktion: Server stoppen
 function Stop-Servers {
-    Add-Log "Beende Server..." "Yellow"
-    
     if ($script:fastapiProcess -ne $null -and -not $script:fastapiProcess.HasExited) {
         Stop-Process -Id $script:fastapiProcess.Id -Force -ErrorAction SilentlyContinue
-        Add-Log "[STOP] FastAPI beendet" "Red"
     }
     
     if ($script:vaultProcess -ne $null -and -not $script:vaultProcess.HasExited) {
         Stop-Process -Id $script:vaultProcess.Id -Force -ErrorAction SilentlyContinue
-        Add-Log "[STOP] Vault beendet" "Red"
     }
     
     # Auch alle verwaisten Prozesse killen
     Get-Process -Name "python", "node" -ErrorAction SilentlyContinue | 
-        Where-Object { $_.Parent.Id -eq $PID -or $_.CommandLine -like "*uvicorn*" -or $_.CommandLine -like "*server.js*" } |
+        Where-Object { $_.CommandLine -like "*uvicorn*" -or $_.CommandLine -like "*server.js*" } |
         Stop-Process -Force -ErrorAction SilentlyContinue
     
     $script:fastapiProcess = $null
     $script:vaultProcess = $null
 }
 
-# Funktion: Status prufen
-function Test-ServersRunning {
-    $fastapiRunning = $script:fastapiProcess -ne $null -and -not $script:fastapiProcess.HasExited
-    $vaultRunning = $script:vaultProcess -ne $null -and -not $script:vaultProcess.HasExited
-    return ($fastapiRunning -and $vaultRunning)
-}
-
 # Haupt-GUI erstellen
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Prompt-Armor Server Manager"
-$form.Size = New-Object System.Drawing.Size(500, 350)
+$form.Size = New-Object System.Drawing.Size(500, 320)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = [System.Drawing.Color]::FromArgb(10, 10, 11)
 $form.FormBorderStyle = "FixedSingle"
@@ -174,7 +60,6 @@ $statusPanel = New-Object System.Windows.Forms.Panel
 $statusPanel.Size = New-Object System.Drawing.Size(460, 80)
 $statusPanel.Location = New-Object System.Drawing.Point(20, 90)
 $statusPanel.BackColor = [System.Drawing.Color]::FromArgb(26, 26, 30)
-$statusPanel.BorderStyle = "None"
 $form.Controls.Add($statusPanel)
 
 # Status Labels
@@ -221,75 +106,79 @@ $stopButton.Cursor = "Hand"
 $stopButton.Enabled = $false
 $form.Controls.Add($stopButton)
 
-# Button: Logs anzeigen
-$logButton = New-Object System.Windows.Forms.Button
-$logButton.Text = "Logs anzeigen"
-$logButton.Size = New-Object System.Drawing.Size(200, 40)
-$logButton.Location = New-Object System.Drawing.Point(150, 255)
-$logButton.Font = New-Object System.Drawing.Font("Segoe UI", 11)
-$logButton.BackColor = [System.Drawing.Color]::FromArgb(55, 65, 81)
-$logButton.ForeColor = [System.Drawing.Color]::White
-$logButton.FlatStyle = "Flat"
-$logButton.FlatAppearance.BorderSize = 0
-$logButton.Cursor = "Hand"
-$form.Controls.Add($logButton)
-
 # URL Labels
 $urlLabel = New-Object System.Windows.Forms.Label
-$urlLabel.Text = "URLs: http://localhost:8000 | http://localhost:3700/api/health"
+$urlLabel.Text = "localhost:8000 | localhost:3700/api/health"
 $urlLabel.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $urlLabel.ForeColor = [System.Drawing.Color]::FromArgb(107, 114, 128)
 $urlLabel.AutoSize = $true
-$urlLabel.Location = New-Object System.Drawing.Point(90, 305)
+$urlLabel.Location = New-Object System.Drawing.Point(120, 260)
 $form.Controls.Add($urlLabel)
 
-# Timer fur Status-Updates
+# Timer fuer Status-Updates
 $timer = New-Object System.Windows.Forms.Timer
-$timer.Interval = 1000
+$timer.Interval = 500
 
 $timer.Add_Tick({
+    # FastAPI Status
     if ($script:fastapiProcess -ne $null) {
-        if (-not $script:fastapiProcess.HasExited) {
+        try {
+            $null = Get-Process -Id $script:fastapiProcess.Id -ErrorAction Stop
             $fastapiStatusLabel.Text = "[ON] FastAPI (Port 8000): Online"
             $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
-        } else {
+        } catch {
             $fastapiStatusLabel.Text = "[OFF] FastAPI (Port 8000): Offline"
             $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
+            $script:fastapiProcess = $null
         }
+    } else {
+        $fastapiStatusLabel.Text = "[OFF] FastAPI (Port 8000): Offline"
+        $fastapiStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
     }
     
+    # Vault Status
     if ($script:vaultProcess -ne $null) {
-        if (-not $script:vaultProcess.HasExited) {
+        try {
+            $null = Get-Process -Id $script:vaultProcess.Id -ErrorAction Stop
             $vaultStatusLabel.Text = "[ON] Vault (Port 3700): Online"
             $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(16, 185, 129)
-        } else {
+        } catch {
             $vaultStatusLabel.Text = "[OFF] Vault (Port 3700): Offline"
             $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
+            $script:vaultProcess = $null
         }
+    } else {
+        $vaultStatusLabel.Text = "[OFF] Vault (Port 3700): Offline"
+        $vaultStatusLabel.ForeColor = [System.Drawing.Color]::FromArgb(239, 68, 68)
     }
     
-    $running = Test-ServersRunning
+    # Buttons aktualisieren
+    $running = ($script:fastapiProcess -ne $null -or $script:vaultProcess -ne $null)
     $startButton.Enabled = -not $running
     $stopButton.Enabled = $running
 })
 
 $timer.Start()
 
-# Event Handler
+# Event Handler: Start
 $startButton.Add_Click({
-    Create-LogWindow
-    $script:logForm.Show()
+    $baseDir = "C:\Users\belki\Desktop\PromptAmor"
     
-    Start-FastAPI
+    # FastAPI starten (eigenes Fenster)
+    $cmd1 = "cd `"$baseDir`" ; python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+    $script:fastapiProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd1 -PassThru
+    
     Start-Sleep -Seconds 2
-    Start-Vault
     
-    Add-Log "Beide Server gestartet!" "Green"
-    Add-Log "Web Interface: http://localhost:8000" "Cyan"
-    Add-Log "Vault Health: http://localhost:3700/api/health" "Cyan"
+    # Vault starten (eigenes Fenster)
+    $cmd2 = "cd `"$baseDir\prompt-vault`" ; npm start"
+    $script:vaultProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd2 -PassThru
     
+    Start-Sleep -Seconds 3
+    
+    # Frage ob Browser oeffnen
     $result = [System.Windows.Forms.MessageBox]::Show(
-        "Server gestartet!`n`nWeb Interface oeffnen?", 
+        "Server werden gestartet!`n`nWeb Interface im Browser oeffnen?", 
         "Prompt-Armor", 
         "YesNo", 
         "Information"
@@ -300,12 +189,9 @@ $startButton.Add_Click({
     }
 })
 
+# Event Handler: Stop
 $stopButton.Add_Click({
     Stop-Servers
-    
-    if ($script:logForm -ne $null -and -not $script:logForm.IsDisposed) {
-        $script:logForm.Close()
-    }
     
     [System.Windows.Forms.MessageBox]::Show(
         "Alle Server wurden beendet.", 
@@ -313,14 +199,6 @@ $stopButton.Add_Click({
         "OK", 
         "Information"
     )
-})
-
-$logButton.Add_Click({
-    if ($script:logForm -eq $null -or $script:logForm.IsDisposed) {
-        Create-LogWindow
-    }
-    $script:logForm.Show()
-    $script:logForm.Focus()
 })
 
 # Form schliessen = Server stoppen

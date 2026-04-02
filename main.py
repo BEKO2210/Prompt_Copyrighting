@@ -220,3 +220,67 @@ async def vault_run(request: VaultRunRequest):
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Vault Fehler: {str(e)}")
+
+
+# =============================================================================
+# EINFACHER RUN ENDPOINT - GET /run/{prompt_id}
+# =============================================================================
+
+@app.get("/run/{prompt_id}")
+async def run_prompt_simple(
+    prompt_id: str, 
+    topic: str = "", 
+    keyword: str = "", 
+    word_count: str = "800"
+):
+    """
+    Führt einen Vault-Prompt aus und gibt nur die Antwort zurück.
+    Der Prompt wird NIE an den Client gesendet!
+    
+    Beispiel: /run/seo-article?topic=KI&keyword=AI&word_count=500
+    """
+    if not VAULT_TOKEN:
+        raise HTTPException(
+            status_code=500, 
+            detail="VAULT_TOKEN nicht konfiguriert. Bitte .env Datei prüfen."
+        )
+    
+    try:
+        # Baue Variablen
+        variables = {}
+        if topic:
+            variables["topic"] = topic
+        if keyword:
+            variables["keyword"] = keyword
+        if word_count:
+            variables["word_count"] = word_count
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{VAULT_URL}/api/run",
+                headers={"Authorization": f"Bearer {VAULT_TOKEN}"},
+                json={
+                    "prompt_id": prompt_id,
+                    "variables": variables
+                },
+                timeout=60.0
+            )
+            
+            result = response.json()
+            
+            # Gebe nur die Antwort zurück, NICHT den Prompt!
+            return {
+                "response": result["response"],
+                "prompt_id": result["prompt_id"],
+                "model": result["model"],
+                "usage": result.get("usage", {})
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fehler: {str(e)}")
+
+
+@app.get("/vault-runner", response_class=FileResponse)
+async def vault_runner_page():
+    """Einfache Web-Oberfläche zum Ausführen von Vault-Prompts."""
+    return FileResponse("static/vault-runner.html")

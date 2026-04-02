@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt-Vault Runner</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0b;
+            --surface-color: #1a1a1e;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-color: #10b981;
+            --accent-hover: #059669;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #111827 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #fbbf24;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.75rem;
+            background: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .output {
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .output.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav {
+            margin-bottom: 1rem;
+        }
+
+        .nav a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">&larr; Zurück zum Generator</a>
+        </div>
+
+        <div class="header">
+            <h1>Prompt-Vault Runner</h1>
+            <p>Server-side Prompt Execution - Der Prompt bleibt geheim!</p>
+        </div>
+
+        <div class="warning-box">
+            <strong>🔒 Sicherheitshinweis:</strong> Der Prompt wird auf dem Server ausgeführt. 
+            Du siehst nur das Ergebnis, niemals den Prompt-Text selbst!
+        </div>
+
+        <div class="card">
+            <div class="form-group">
+                <label for="prompt-select">Prompt auswählen</label>
+                <select id="prompt-select">
+                    <option value="">Lade Prompts...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="topic">Thema (Topic)</label>
+                <input type="text" id="topic" placeholder="z.B. Künstliche Intelligenz">
+            </div>
+
+            <div class="form-group">
+                <label for="keyword">Keyword</label>
+                <input type="text" id="keyword" placeholder="z.B. AI Security">
+            </div>
+
+            <div class="form-group">
+                <label for="word-count">Wortanzahl</label>
+                <input type="text" id="word-count" value="800">
+            </div>
+
+            <button id="run-btn" class="btn">Prompt ausführen</button>
+        </div>
+
+        <div id="output" class="output"></div>
+    </div>
+
+    <script>
+        const promptSelect = document.getElementById('prompt-select');
+        const runBtn = document.getElementById('run-btn');
+        const output = document.getElementById('output');
+
+        // Lade verfügbare Prompts
+        async function loadPrompts() {
+            try {
+                const response = await fetch('/api/vault/prompts');
+                const data = await response.json();
+                
+                promptSelect.innerHTML = '<option value="">Bitte wählen...</option>';
+                
+                data.prompts.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = `${p.name} - ${p.description}`;
+                    promptSelect.appendChild(option);
+                });
+            } catch (error) {
+                promptSelect.innerHTML = '<option value="">Fehler beim Laden</option>';
+                console.error(error);
+            }
+        }
+
+        // Prompt ausführen
+        runBtn.addEventListener('click', async () => {
+            const promptId = promptSelect.value;
+            const topic = document.getElementById('topic').value;
+            const keyword = document.getElementById('keyword').value;
+            const wordCount = document.getElementById('word-count').value;
+
+            if (!promptId) {
+                alert('Bitte einen Prompt auswählen!');
+                return;
+            }
+
+            runBtn.disabled = true;
+            runBtn.innerHTML = '<span class="spinner"></span> Lade...';
+            output.classList.remove('show');
+
+            try {
+                const response = await fetch(`/run/${promptId}?topic=${encodeURIComponent(topic)}&keyword=${encodeURIComponent(keyword)}&word_count=${encodeURIComponent(wordCount)}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Fehler beim Ausführen');
+                }
+
+                const data = await response.json();
+                
+                output.innerHTML = `
+                    <div class="meta">
+                        Prompt: ${data.prompt_id} | Modell: ${data.model} | 
+                        Tokens: ${data.usage.input_tokens || 0} in / ${data.usage.output_tokens || 0} out
+                    </div>
+                    ${data.response}
+                `;
+                output.classList.add('show');
+                
+            } catch (error) {
+                output.innerHTML = `<div style="color: #ef4444;">Fehler: ${error.message}</div>`;
+                output.classList.add('show');
+            } finally {
+                runBtn.disabled = false;
+                runBtn.innerHTML = 'Prompt ausführen';
+            }
+        });
+
+        // Beim Start laden
+        loadPrompts();
+    </script>
+</body>
+</html>
